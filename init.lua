@@ -1,8 +1,9 @@
--- moonrealm 0.3.0 by paramat.
+-- moonrealm 0.4.0 by paramat.
 -- Licenses: Code WTFPL. Textures CC BY-SA.
--- Moonstone and moondust textures are recoloured default textures: sand by VanessaE and stone by Perttu Ahola.
+-- Moonstone and most moondust textures are recoloured default textures: sands by VanessaE and stone by Perttu Ahola.
+-- Pine sapling and needles textures by Splizard.
 
--- Variables.
+-- Parameters.
 
 local ONGEN = true -- (true / false) -- Enable / disable moonrealm generation.
 
@@ -12,12 +13,15 @@ local OFFCEN = 80 -- 80 -- Average offset centre, relative to base of surface ch
 local CENAMP = 24 -- 24 -- Offset centre amplitude.
 local HIGRAD = 48 -- 48 -- Surface generating noise gradient above offcen. Controls height of hills.
 local LOGRAD = 48 -- 48 -- Surface generating noise gradient below offcen. Controls depth of depressions.
-local HEXP = 1.5 -- 1.5 -- Noise offset exponent above offcen.
-local LEXP = 3 -- 3 -- Noise offset exponent below offcen.
+local HEXP = 2 -- 2 -- Noise offset exponent above offcen.
+local LEXP = 2 -- 2 -- Noise offset exponent below offcen.
 
 local DUSAMP = 0.1 -- 0.1 -- Dust depth amplitude.
 local DUSRAN = 0.01 -- 0.01 -- Dust depth randomness.
-local DUSGRAD = 128 -- 128 -- Dust noise gradient.
+local DUSGRAD = 160 -- 160 -- Dust noise gradient.
+
+local ICEALT = 128 -- 128 -- Ice spawns above this altitude, relative to base of surface chunks.
+local ICECHA = 1 -- 1 -- Maximum 1/x chance water ice in dust.
 
 local CAVOFF = 0.02 -- 0.02 -- Cave offset. Size of underground caves.
 local CAVLEV = 0 -- 0 -- Caves thin above this level, relative to base of surface chunks.
@@ -25,13 +29,21 @@ local CAVDIS = 80 -- 80 -- Cave thinning distance in nodes.
 
 local LUX = true -- Enable / disable luxore.
 local LUXCHUN = 7*7*7 -- 7*7*7 -- Luxore 1/x chance underground.
+local IROCHA = 11*11*11 -- 11*11*11 -- Iron ore 1/x chance.
+local MESCHA = 23*23*23 -- 23*23*23 -- Mese block 1/x chance.
 
 local ATMOS = true -- Enable / disable tinted atmosphere.
 local ATMTOP = 16000 -- Exact top of atmosphere.
-local ATMALP = 16 -- 16 -- Atmosphere alpha.
+local ATMALP = 32 -- 16 -- Atmosphere alpha.
 local ATMRED = 255 -- 255 -- Atmosphere RGB.
 local ATMGRE = 148 -- 148
 local ATMBLU = 0 -- 0
+
+local AIRINT = 29 -- Air spread abm interval.
+local SOILINT = 31 -- Hydroponics abm interval.
+
+local PININT = 67 -- Spawn pine abm interval.
+local PINCHA = 4 -- 1/x chance per sapling.
 
 local DEBUG = true
 
@@ -66,6 +78,7 @@ moonrealm = {}
 local yminq = (80 * math.floor((YMIN + 32) / 80)) - 32
 local ymaxq = (80 * math.floor((YMAX + 32) / 80)) + 47
 local levcav = ymaxq - 159 + CAVLEV
+local altice = ymaxq - 159 + ICEALT
 
 -- Nodes.
 
@@ -76,12 +89,20 @@ minetest.register_node("moonrealm:moonstone", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
+minetest.register_node("moonrealm:ironore", {
+	description = "Iron Ore",
+	tiles = {"moonrealm_moonstone.png^default_mineral_iron.png"},
+	groups = {cracky=3},
+	drop = "default:iron_lump",
+	sounds = default.node_sound_stone_defaults(),
+})
+
 minetest.register_node("moonrealm:moondust1", {
 	description = "Moon Dust 1",
 	tiles = {"moonrealm_moondust1.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.07},
+		footstep = {name="default_gravel_footstep", gain=0.09},
 	}),
 })
 
@@ -90,7 +111,7 @@ minetest.register_node("moonrealm:moondust2", {
 	tiles = {"moonrealm_moondust2.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.07},
+		footstep = {name="default_gravel_footstep", gain=0.08},
 	}),
 })
 
@@ -108,7 +129,7 @@ minetest.register_node("moonrealm:moondust4", {
 	tiles = {"moonrealm_moondust4.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.07},
+		footstep = {name="default_gravel_footstep", gain=0.06},
 	}),
 })
 
@@ -117,7 +138,7 @@ minetest.register_node("moonrealm:moondust5", {
 	tiles = {"moonrealm_moondust5.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.07},
+		footstep = {name="default_gravel_footstep", gain=0.05},
 	}),
 })
 
@@ -149,6 +170,164 @@ minetest.register_node("moonrealm:atmos", {
 	post_effect_color = {a=ATMALP, r=ATMRED, g=ATMGRE, b=ATMBLU},
 })
 
+minetest.register_node("moonrealm:air", {
+	drawtype = "airlike",
+	paramtype = "light",
+	sunlight_propagates = true,
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+})
+
+minetest.register_node("moonrealm:airgen", {
+	description = "Air Generator",
+	tiles = {"moonrealm_airgen.png"},
+	groups = {cracky=3},
+	sounds = default.node_sound_stone_defaults(),
+	on_construct = function(pos)
+		local env = minetest.env
+		local x = pos.x
+		local y = pos.y
+		local z = pos.z
+		for i = -1,1 do
+		for j = -1,1 do
+		for k = -1,1 do
+			if not (i == 0 and j == 0 and k == 0) then
+				local nodename = env:get_node({x=x+i,y=y+j,z=z+k}).name
+				if nodename == "moonrealm:atmos" or nodename == "air" then
+					env:add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
+					print ("[moonrealm] Added air node")
+				end
+			end
+		end
+		end
+		end
+		
+	end
+})
+
+minetest.register_node("moonrealm:waterice", {
+	description = "Water Ice",
+	tiles = {"moonrealm_waterice.png"},
+	paramtype = "light",
+	groups = {cracky=3},
+	sounds = default.node_sound_glass_defaults(),
+})
+
+minetest.register_node("moonrealm:hlflowing", {
+	description = "Flowing HL",
+	inventory_image = minetest.inventorycube("moonrealm_hl.png"),
+	drawtype = "flowingliquid",
+	tiles = {"moonrealm_hl.png"},
+	special_tiles = {
+		{
+			image="moonrealm_hlflowing_animated.png",
+			backface_culling=false,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=1.2}
+		},
+		{
+			image="moonrealm_hlflowing_animated.png",
+			backface_culling=true,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=1.2}
+		},
+	},
+	alpha = 192,
+	paramtype = "light",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	liquidtype = "flowing",
+	liquid_alternative_flowing = "moonrealm:hlflowing",
+	liquid_alternative_source = "moonrealm:hlsource",
+	liquid_viscosity = 1,
+	post_effect_color = {a=192, r=115, g=55, b=24},
+	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
+})
+
+minetest.register_node("moonrealm:hlsource", {
+	description = "HL Source",
+	inventory_image = minetest.inventorycube("moonrealm_hl.png"),
+	drawtype = "liquid",
+	tiles = {"moonrealm_hl.png"},
+	alpha = 192,
+	paramtype = "light",
+	walkable = false,
+	pointable = false,
+	buildable_to = true,
+	liquidtype = "source",
+	liquid_alternative_flowing = "moonrealm:hlflowing",
+	liquid_alternative_source = "moonrealm:hlsource",
+	liquid_viscosity = 1,
+	post_effect_color = {a=192, r=115, g=55, b=24},
+	groups = {water=3, liquid=3, puts_out_fire=1},
+})
+
+minetest.register_node("moonrealm:moonsoil", {
+	description = "Moon Soil",
+	tiles = {"moonrealm_moonsoil.png"},
+	groups = {crumbly=3,soil=1},
+	drop = "moonrealm:moondust5",
+	sounds = default.node_sound_dirt_defaults(),
+})
+
+minetest.register_node("moonrealm:airlock", {
+	description = "Airlock",
+	tiles = {"moonrealm_airlock.png"},
+	light_source = 14,
+	walkable = false,
+	post_effect_color = {a=255, r=0, g=0, b=0},
+	groups = {cracky=3},
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:moonstonebrick", {
+	description = "Moonstone Brick",
+	tiles = {"moonrealm_moonstonebrick.png"},
+	groups = {cracky=3},
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:moonglass", {
+	description = "Moon Glass",
+	drawtype = "glasslike",
+	tiles = {"moonrealm_moonglass.png"},
+	paramtype = "light",
+	sunlight_propagates = true,
+	groups = {snappy=2,cracky=3,oddly_breakable_by_hand=3},
+	sounds = default.node_sound_glass_defaults(),
+})
+
+minetest.register_node("moonrealm:needles", {
+	description = "MR Pine Needles",
+	visual_scale = 1.3,
+	tiles = {"moonrealm_needles.png"},
+	paramtype = "light",
+	groups = {snappy=3, flammable=2},
+	drop = {
+		max_items = 1,
+		items = {
+			{items = {"moonrealm:psapling"}, rarity = 20},
+			{items = {"moonrealm:needles"}}
+		}
+	},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("moonrealm:psapling", {
+	description = "MR Pine Sapling",
+	drawtype = "plantlike",
+	visual_scale = 1.0,
+	tiles = {"moonrealm_psapling.png"},
+	inventory_image = "moonrealm_psapling.png",
+	wield_image = "moonrealm_psapling.png",
+	paramtype = "light",
+	walkable = false,
+	groups = {snappy=2,dig_immediate=3,flammable=2},
+	sounds = default.node_sound_defaults(),
+})
+
 -- Item.
 
 minetest.register_craftitem("moonrealm:luxcrystal", {
@@ -167,6 +346,64 @@ minetest.register_craft({
     },
 })
 
+minetest.register_craft({
+    output = "moonrealm:airgen",
+    recipe = {
+        {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
+        {"moonrealm:waterice", "moonrealm:luxnode", "moonrealm:waterice"},
+        {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
+    },
+})
+
+minetest.register_craft({
+	output = "default:water_source",
+	recipe = {
+		{"moonrealm:waterice"},
+	},
+})
+
+minetest.register_craft({
+    output = "moonrealm:hlsource",
+    recipe = {
+        {"default:leaves", "default:leaves", "default:leaves"},
+        {"default:leaves", "moonrealm:waterice", "default:leaves"},
+        {"default:leaves", "default:leaves", "default:leaves"},
+    },
+})
+
+minetest.register_craft({
+	output = "moonrealm:moonstonebrick 4",
+	recipe = {
+		{"moonrealm:moonstone", "moonrealm:moonstone"},
+		{"moonrealm:moonstone", "moonrealm:moonstone"},
+	}
+})
+
+minetest.register_craft({
+    output = "moonrealm:airlock",
+    recipe = {
+        {"default:steel_ingot", "", "default:steel_ingot"},
+        {"default:steel_ingot", "moonrealm:luxnode", "default:steel_ingot"},
+        {"default:steel_ingot", "", "default:steel_ingot"},
+    },
+})
+
+-- Cooking.
+
+minetest.register_craft({
+	type = "cooking",
+	output = "moonrealm:moonglass",
+	recipe = "moonrealm:moondust1",
+})
+
+-- Fuel.
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "moonrealm:luxore",
+	burntime = 50,
+})
+
 -- On dignode. Atmosphere flows into a dug hole.
 
 if ATMOS then
@@ -182,6 +419,7 @@ if ATMOS then
 				local nodename = env:get_node({x=x+i,y=y+j,z=z+k}).name
 				if nodename == "moonrealm:atmos" then	
 					env:add_node({x=x,y=y,z=z},{name="moonrealm:atmos"})
+					print ("[moonrealm] Atmosphere flows into hole")
 					return
 				end
 			end
@@ -191,14 +429,115 @@ if ATMOS then
 	end)
 end
 
+-- Abm.
+
+if ATMOS then
+	minetest.register_abm({
+		nodenames = {"moonrealm:air"},
+		neighbors = {"moonrealm:atmos", "air"},
+		interval = AIRINT,
+		chance = 9,
+		action = function(pos, node, active_object_count, active_object_count_wider)
+			local env = minetest.env
+			local x = pos.x
+			local y = pos.y
+			local z = pos.z
+			for i = -1,1 do
+			for j = -1,1 do
+			for k = -1,1 do
+				if not (i == 0 and j == 0 and k == 0) then
+					local nodename = env:get_node({x=x+i,y=y+j,z=z+k}).name
+					if nodename == "moonrealm:atmos" or nodename == "air" then
+						env:add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
+						print ("[moonrealm] Air spreads ("..i.." "..j.." "..k..")")
+					end
+				end
+			end
+			end
+			end
+		end
+	})
+end
+
+minetest.register_abm({
+	nodenames = {"moonrealm:hlsource", "moonrealm:hlflowing"},
+	interval = SOILINT,
+	chance = 9,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local env = minetest.env
+		local x = pos.x
+		local y = pos.y
+		local z = pos.z
+		for i = -1,1 do
+		for j = -1,1 do
+		for k = -1,1 do
+			if not (i == 0 and j == 0 and k == 0) then
+				local nodename = env:get_node({x=x+i,y=y+j,z=z+k}).name
+				if nodename == "moonrealm:moondust5" then
+					env:add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:moonsoil"})
+					print ("[moonrealm] Hydroponic liquid saturates")
+				end
+			end
+		end
+		end
+		end
+	end
+})
+
+minetest.register_abm({
+	nodenames = {"moonrealm:moonsoil"},
+	interval = SOILINT,
+	chance = 9,
+	action = function(pos, node)
+		if not minetest.find_node_near(pos, 1, {"moonrealm:hlsource", "moonrealm:hlflowing"}) then
+			minetest.add_node(pos, {name="moonrealm:moondust5"})
+			print ("[moonrealm] Moonsoil dries")
+		end
+	end,
+})
+
+minetest.register_abm({
+	nodenames = {"moonrealm:psapling"},
+	interval = PININT,
+	chance = PINCHA,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local env = minetest.env
+		local nodename = env:get_node({x=pos.x,y=pos.y-1,z=pos.z}).name
+		if nodename == "moonrealm:moonsoil" then
+			moonrealm_pine(pos)
+			print ("[moonrealm] Pine sapling grows")
+		end
+	end,
+})
+
 -- Ores.
 
 if ONGEN then
 	minetest.register_ore({
 		ore_type       = "scatter",
+		ore            = "default:mese",
+		wherein        = "air",
+		clust_scarcity = MESCHA,
+		clust_num_ores = 1,
+		clust_size     = 1,
+		height_min     = yminq,
+		height_max     = ymaxq - 160,
+	})
+	minetest.register_ore({
+		ore_type       = "scatter",
+		ore            = "moonrealm:ironore",
+		wherein        = "air",
+		clust_scarcity = IROCHA,
+		clust_num_ores = 1,
+		clust_size     = 1,
+		height_min     = yminq,
+		height_max     = ymaxq - 160,
+	})
+	minetest.register_ore({
+		ore_type       = "scatter",
 		ore            = "moonrealm:luxore",
 		wherein        = "air",
-		clust_scarcity = LUXCHUN,
+		clust_scarcity = LUXCHA,
 		clust_num_ores = 1,
 		clust_size     = 1,
 		height_min     = yminq,
@@ -263,7 +602,6 @@ if ONGEN then
 						end
 						local noise1 = perlin1:get3d({x=x,y=y,z=z})
 						local noise4 = perlin4:get3d({x=x,y=y,z=z})
-						local noise6 = perlin3:get3d({x=x-828,y=y-828,z=z-828}) + math.random() * 0.1
 						local noise1off = (noise1 + noise4) / 2 - offset
 						if noise1off >= 0 then -- if terrain then
 							local cavprop = (1 - (y - levcav) / CAVDIS)
@@ -274,14 +612,21 @@ if ONGEN then
 								local noise3off = noise3 - (y - cenoff) / DUSGRAD
 								local thrsto = noise3off * DUSAMP + math.random() * DUSRAN
 								if noise1off >= thrsto then
-									if noise1off > DUSAMP and LUX and cavprop > 0
-									and math.random(math.floor(LUXCHUN / cavprop)) == 2 then
+									if noise1off > DUSAMP and math.random(MESCHA) == 2 then
+										env:add_node({x=x,y=y,z=z},{name="default:mese"})
+									elseif noise1off > DUSAMP and math.random(IROCHA) == 2 then
+										env:add_node({x=x,y=y,z=z},{name="moonrealm:ironore"})
+									elseif LUX and noise1off > DUSAMP and cavprop > 0
+									and math.random(math.floor(LUXCHA / cavprop)) == 2 then
 										env:add_node({x=x,y=y,z=z},{name="moonrealm:luxore"})
 									else
 										env:add_node({x=x,y=y,z=z},{name="moonrealm:moonstone"})
 									end
 								else
-									if noise6 < -0.9 then
+									local noise6 = perlin3:get3d({x=x-828,y=y-828,z=z-828}) + math.random() * 0.1
+									if y > altice and math.random(math.floor(ICECHA * (ymaxq - altice) / (y - altice))) == 1 then
+										env:add_node({x=x,y=y,z=z},{name="moonrealm:waterice"})
+									elseif noise6 < -0.9 then
 										env:add_node({x=x,y=y,z=z},{name="moonrealm:moondust1"})
 									elseif noise6 < -0.3 then
 										env:add_node({x=x,y=y,z=z},{name="moonrealm:moondust2"})
@@ -329,4 +674,34 @@ if ONGEN then
 			end
 		end
 	end)
+end
+
+-- Functions.
+
+function moonrealm_pine(pos)
+	local env = minetest.env
+	local t = 5 + math.random(3)
+	for j= -2, t - 2 do
+		env:add_node({x=pos.x,y=pos.y+j,z=pos.z},{name="default:tree"})
+		if j >= 1 and j <= t - 4 then
+			for i = -1, 1 do
+			for k = -1, 1 do
+				if i ~= 0 or k ~= 0 then
+					env:add_node({x=pos.x+i,y=pos.y+j,z=pos.z+k},{name="moonrealm:needles"})
+				end
+			end
+			end
+		elseif j >= t - 3 then
+			for i = -1, 1 do
+			for k = -1, 1 do
+				if (i == 0 and k ~= 0) or (i ~= 0 and k == 0) then
+					env:add_node({x=pos.x+i,y=pos.y+j,z=pos.z+k},{name="moonrealm:needles"})
+				end
+			end
+			end
+		end
+	end
+	for j = t - 1, t do
+		env:add_node({x=pos.x,y=pos.y+j,z=pos.z},{name="moonrealm:needles"})
+	end
 end
