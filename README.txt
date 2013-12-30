@@ -1,4 +1,4 @@
-Moonrealm 0.5.0 by paramat
+Moonrealm 0.5.1 by paramat
 For latest stable Minetest and back to 0.4.8
 Depends default
 Licenses: code WTFPL, textures CC BY-SA

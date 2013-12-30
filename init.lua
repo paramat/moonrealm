@@ -1,4 +1,4 @@
--- moonrealm 0.5.0 by paramat
+-- moonrealm 0.5.1 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -12,31 +12,26 @@ local ZMAX = 33000
 
 local YMIN = 14000 --  -- Approx lower limit
 local LHCLEV = 14968 --  -- Liquid hydrocarbon lake level
-local GRADCEN = 15000 --  -- Grad centre / terrain centre average level
-local ICELEV = 15128 --  -- Ice spawns above this altitude
+local GRADCEN = 14968 --  -- Grad centre / terrain centre average level
+local ICELEV = 15048 --  -- Ice spawns above this altitude
 local YMAX = 16000 --  -- Approx top of atmosphere
 
-local CENAMP = 96 --  -- Offset centre amplitude, terrain centre is varied by this
-local HIGRAD = 96 --  -- Surface generating noise gradient above offcen, controls depth of upper terrain
-local LOGRAD = 96 --  -- Surface generating noise gradient below offcen, controls depth of lower terrain
+local CENAMP = 128 --  -- Offset centre amplitude, terrain centre is varied by this
+local HIGRAD = 128 --  -- Surface generating noise gradient above offcen, controls depth of upper terrain
+local LOGRAD = 128 --  -- Surface generating noise gradient below offcen, controls depth of lower terrain
 local HEXP = 0.5 --  -- Noise offset exponent above offcen, 1 = normal 3D perlin terrain
 local LEXP = 2 --  -- Noise offset exponent below offcen
 
 local FISTS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
 local FISEXP = 0.05 --  -- Fissure expansion rate under surface
 
-local STOT = 0.1 --  -- Stone density threshold, depth of dust
+local STOT = 0.05 --  -- Stone density threshold, depth of dust
 local DUSRAN = 0.05 --  -- Dust blend randonmness
 
-local LUXCHA = 7*7*7 -- 7*7*7 -- Luxore 1/x chance underground
-local IROCHA = 5*5*5 -- 5*5*5 -- Iron ore 1/x chance
-local MESCHA = 23*23*23 -- 23*23*23 -- Mese block 1/x chance
-
-local AIRINT = 29 --  -- Air spread abm interval
-local AIRCHA = 9 --  -- 1/x chance per air node
-local SOILINT = 31 --  -- Hydroponics saturation / drying abm intervals
-local PININT = 57 --  -- Spawn pine abm interval
-local PINCHA = 2 --  -- 1/x chance per sapling
+local ICECHA = 11*11*11 --  -- Ice 1/x chance per dust node
+local LUXCHA = 9*9*9 --  -- Luxore 1/x chance
+local IROCHA = 7*7*7 --  -- Iron ore 1/x chance
+local MESCHA = 23*23*23 --  -- Mese block 1/x chance
 
 -- 3D noise for terrain
 
@@ -46,7 +41,7 @@ local np_terrain = {
 	spread = {x=256, y=256, z=256},
 	seed = 58588900033,
 	octaves = 5,
-	persist = 0.6
+	persist = 0.7
 }
 
 -- 3D noise for alt terrain, 414 / 256 = golden ratio
@@ -56,8 +51,8 @@ local np_terralt = {
 	scale = 1,
 	spread = {x=414, y=414, z=414},
 	seed = 13331930910,
-	octaves = 6,
-	persist = 0.6
+	octaves = 5,
+	persist = 0.7
 }
 
 -- 3D noise for fissures
@@ -79,7 +74,7 @@ local np_gradcen = {
 	spread = {x=512, y=512, z=512},
 	seed = 9344,
 	octaves = 4,
-	persist = 0.6
+	persist = 0.5
 }
 
 -- 3D noise for dust type
@@ -136,8 +131,8 @@ if ATMOS and AIRGEN then
 	minetest.register_abm({
 		nodenames = {"moonrealm:air"},
 		neighbors = {"moonrealm:atmos"},
-		interval = AIRINT,
-		chance = AIRCHA,
+		interval = 29,
+		chance = 9,
 		action = function(pos, node, active_object_count, active_object_count_wider)
 			local x = pos.x
 			local y = pos.y
@@ -180,7 +175,7 @@ end
 minetest.register_abm({
 	nodenames = {"moonrealm:hlsource", "moonrealm:hlflowing"},
 	neighbors = {"moonrealm:moondust5"},
-	interval = SOILINT,
+	interval = 31,
 	chance = 9,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local x = pos.x
@@ -204,7 +199,7 @@ minetest.register_abm({
 
 minetest.register_abm({
 	nodenames = {"moonrealm:moonsoil"},
-	interval = SOILINT,
+	interval = 31,
 	chance = 27,
 	action = function(pos, node)
 		local x = pos.x
@@ -231,10 +226,22 @@ minetest.register_abm({
 
 minetest.register_abm({
 	nodenames = {"moonrealm:psapling"},
-	interval = PININT,
-	chance = PINCHA,
+	interval = 57,
+	chance = 2,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		moonrealm_pine(pos)
+	end,
+})
+
+-- Update luxore lighting to spread light underground
+
+minetest.register_abm({
+	nodenames = {"moonrealm:luxoff"},
+	interval = 23,
+	chance = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		minetest.remove_node(pos)
+		minetest.place_node(pos,{name="moonrealm:luxore"})
 	end,
 })
 
@@ -263,9 +270,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	
 	local c_mese = minetest.get_content_id("default:mese")
 	local c_ironore = minetest.get_content_id("moonrealm:ironore")
-	local c_luxore = minetest.get_content_id("moonrealm:luxore")
+	local c_luxoff = minetest.get_content_id("moonrealm:luxoff")
 	local c_mstone = minetest.get_content_id("moonrealm:moonstone")
-	local c_msand = minetest.get_content_id("default:sandstone")
+	local c_msand = minetest.get_content_id("moonrealm:moonsand")
 	local c_watice = minetest.get_content_id("moonrealm:waterice")
 	local c_mdust1 = minetest.get_content_id("moonrealm:moondust1")
 	local c_mdust2 = minetest.get_content_id("moonrealm:moondust2")
@@ -286,63 +293,85 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_dust = minetest.get_perlin_map(np_dust, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
+	local stable = {}
 	for z = z0, z1 do
-	for y = y0, y1 do
-	local vi = area:index(x0, y, z) -- LVM index for first node in x row
-	for x = x0, x1 do
-		local grad
-		local cenoff = GRADCEN + nvals_gradcen[ni] * CENAMP
-		if y > cenoff then
-			grad = -((y - cenoff) / HIGRAD) ^ HEXP
-		else
-			grad = ((cenoff - y) / LOGRAD) ^ LEXP
+		for si = 1, 80 do
+			stable[si] = true
 		end
-		local density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 + grad
-		if density > 0 then -- if solid terrain
-			local nofis = false
-			if math.abs(nvals_fissure[ni]) > FISTS + math.sqrt(density) * FISEXP then
-				nofis = true
-			end
-			if density >= STOT and nofis then -- stone, ores
-				if math.random(MESCHA) == 2 then
-					data[vi] = c_mese
-				elseif math.random(IROCHA) == 2 then
-					data[vi] = c_ironore
-				elseif math.random(LUXCHA) == 2 then
-					data[vi] = c_luxore
+		for y = y0, y1 do
+			local vi = area:index(x0, y, z) -- LVM index for first node in x row
+			for x = x0, x1 do
+				local grad
+				local xr = x - x0
+				local cenoff = GRADCEN + nvals_gradcen[ni] * CENAMP
+				if y > cenoff then
+					grad = -((y - cenoff) / HIGRAD) ^ HEXP
 				else
-					data[vi] = c_mstone
+					grad = ((cenoff - y) / LOGRAD) ^ LEXP
 				end
-			elseif density < STOT then
-				if y <= LHCLEV + math.random(3) then -- moonsand below liquid level
-					data[vi] = c_msand
-				elseif nofis then
-					if y > ICELEV and math.random(8) == 2 then -- dusts and water ice
-						data[vi] = c_watice
-					elseif nvals_dust[ni] < -0.9 + (math.random() - 0.5) * DUSRAN then
-						data[vi] = c_mdust1
-					elseif nvals_dust[ni] < -0.3 + (math.random() - 0.5) * DUSRAN then
-						data[vi] = c_mdust2
-					elseif nvals_dust[ni] < 0.3 + (math.random() - 0.5) * DUSRAN then
-						data[vi] = c_mdust3
-					elseif nvals_dust[ni] < 0.9 + (math.random() - 0.5) * DUSRAN then
-						data[vi] = c_mdust4
-					else
-						data[vi] = c_mdust5
+				local density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 + grad
+				if density > 0 then -- if terrain
+					local nofis = false
+					if math.abs(nvals_fissure[ni]) > FISTS + math.sqrt(density) * FISEXP then
+						nofis = true
 					end
+					if density >= STOT and nofis -- stone, ores, also in upper fissures below liquid level
+					or (not nofis and y <= LHCLEV and density < STOT * 2) then
+						if math.random(MESCHA) == 2 then
+							data[vi] = c_mese
+						elseif math.random(IROCHA) == 2 then
+							data[vi] = c_ironore
+						elseif math.random(LUXCHA) == 2 then
+							data[vi] = c_luxoff
+						else
+							data[vi] = c_mstone
+						end
+						stable[xr] = true
+					elseif density < STOT and stable[xr] then -- fine materials
+						if y <= LHCLEV + math.random(3) then -- moonsand below sandline, also in fissures
+							data[vi] = c_msand
+						elseif nofis or (not nofis and y <= LHCLEV and density < STOT * 2) then -- dusts, water ice
+							if math.random(ICECHA) == 2 then	-- also in upper fissures below liquid level
+								data[vi] = c_watice
+							elseif nvals_dust[ni] < -0.9 + (math.random() - 0.5) * DUSRAN then
+								data[vi] = c_mdust1
+							elseif nvals_dust[ni] < -0.3 + (math.random() - 0.5) * DUSRAN then
+								data[vi] = c_mdust2
+							elseif nvals_dust[ni] < 0.3 + (math.random() - 0.5) * DUSRAN then
+								data[vi] = c_mdust3
+							elseif nvals_dust[ni] < 0.9 + (math.random() - 0.5) * DUSRAN then
+								data[vi] = c_mdust4
+							else
+								data[vi] = c_mdust5
+							end
+						else -- fissure above liquid level or deep
+							data[vi] = c_atmos
+							stable[xr] = false
+						end
+					else -- fissure or unstable missing node
+						if y <= LHCLEV and density < STOT * 2 then
+							data[vi] = c_lhcsour
+						else
+							data[vi] = c_atmos
+						end
+						stable[xr] = false
+					end
+				elseif y <= LHCLEV then -- if lake then
+					data[vi] = c_lhcsour
+					stable[xr] = false
+				else -- atmosphere
+					data[vi] = c_atmos
+					stable[xr] = false
 				end
-			elseif not nofis then -- fissure, add atmos
-				data[vi] = c_atmos
+				ni = ni + 1
+				vi = vi + 1
 			end
-		elseif y <= LHCLEV then -- if lake then
-			data[vi] = c_lhcsour
-		else -- atmosphere
-			data[vi] = c_atmos
+			--for si = 1, 80 do
+				--if stable[si] then
+					--print (si)
+				--end
+			--end
 		end
-		ni = ni + 1
-		vi = vi + 1
-	end
-	end
 	end
 	
 	vm:set_data(data)

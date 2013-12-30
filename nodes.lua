@@ -58,6 +58,22 @@ minetest.register_node("moonrealm:moondust5", {
 	}),
 })
 
+minetest.register_node("moonrealm:moonsand", {
+	description = "Moonsand",
+	tiles = {"moonrealm_moonsand.png"},
+	groups = {crumbly=3},
+	sounds = default.node_sound_sand_defaults(),
+})
+
+minetest.register_node("moonrealm:luxoff", {
+	description = "MR Lux Ore Temporary",
+	tiles = {"moonrealm_luxore.png"},
+	light_source = 13,
+	groups = {cracky=2},
+	drop = "moonrealm:luxcrystal 9",
+	sounds = default.node_sound_stone_defaults(),
+})
+
 minetest.register_node("moonrealm:luxore", {
 	description = "MR Lux Ore",
 	tiles = {"moonrealm_luxore.png"},
@@ -311,7 +327,7 @@ minetest.register_node("moonrealm:lhcflowing", {
 			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2}
 		},
 	},
-	alpha = LHCALP,
+	alpha = 192,
 	paramtype = "light",
 	walkable = false,
 	pointable = false,
@@ -321,7 +337,7 @@ minetest.register_node("moonrealm:lhcflowing", {
 	liquid_alternative_flowing = "moonrealm:lhcflowing",
 	liquid_alternative_source = "moonrealm:lhcsource",
 	liquid_viscosity = 1,
-	post_effect_color = {a=192, r=140, g=19, b=0},
+	post_effect_color = {a=128, r=140, g=19, b=0},
 	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
 })
 
@@ -330,7 +346,7 @@ minetest.register_node("moonrealm:lhcsource", {
 	inventory_image = minetest.inventorycube("moonrealm_lhc.png"),
 	drawtype = "liquid",
 	tiles = {"moonrealm_lhc.png"},
-	alpha = LHCALP,
+	alpha = 192,
 	paramtype = "light",
 	walkable = false,
 	pointable = false,
@@ -339,7 +355,7 @@ minetest.register_node("moonrealm:lhcsource", {
 	liquid_alternative_flowing = "moonrealm:lhcflowing",
 	liquid_alternative_source = "moonrealm:lhcsource",
 	liquid_viscosity = 1,
-	post_effect_color = {a=192, r=140, g=19, b=0},
+	post_effect_color = {a=128, r=140, g=19, b=0},
 	groups = {water=3, liquid=3, puts_out_fire=1},
 })
 
