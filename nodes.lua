@@ -16,7 +16,7 @@ minetest.register_node("moonrealm:ironore", {
 minetest.register_node("moonrealm:moondust1", {
 	description = "Moon Dust 1",
 	tiles = {"moonrealm_moondust1.png"},
-	groups = {crumbly=3},
+	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.09},
 	}),
@@ -25,7 +25,7 @@ minetest.register_node("moonrealm:moondust1", {
 minetest.register_node("moonrealm:moondust2", {
 	description = "Moon Dust 2",
 	tiles = {"moonrealm_moondust2.png"},
-	groups = {crumbly=3},
+	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.08},
 	}),
@@ -34,7 +34,7 @@ minetest.register_node("moonrealm:moondust2", {
 minetest.register_node("moonrealm:moondust3", {
 	description = "Moon Dust 3",
 	tiles = {"moonrealm_moondust3.png"},
-	groups = {crumbly=3},
+	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.07},
 	}),
@@ -43,7 +43,7 @@ minetest.register_node("moonrealm:moondust3", {
 minetest.register_node("moonrealm:moondust4", {
 	description = "Moon Dust 4",
 	tiles = {"moonrealm_moondust4.png"},
-	groups = {crumbly=3},
+	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.06},
 	}),
@@ -52,7 +52,7 @@ minetest.register_node("moonrealm:moondust4", {
 minetest.register_node("moonrealm:moondust5", {
 	description = "Moon Dust 5",
 	tiles = {"moonrealm_moondust5.png"},
-	groups = {crumbly=3},
+	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.05},
 	}),
@@ -201,7 +201,7 @@ minetest.register_node("moonrealm:hlsource", {
 minetest.register_node("moonrealm:moonsoil", {
 	description = "Moon Soil",
 	tiles = {"moonrealm_moonsoil.png"},
-	groups = {crumbly=3},
+	groups = {crumbly=3, falling_node=1},
 	drop = "moonrealm:moondust5",
 	sounds = default.node_sound_dirt_defaults(),
 })
@@ -233,35 +233,35 @@ minetest.register_node("moonrealm:moonglass", {
 	sounds = default.node_sound_glass_defaults(),
 })
 
-minetest.register_node("moonrealm:needles", {
-	description = "MR Pine Needles",
-	visual_scale = 1.3,
-	tiles = {"moonrealm_needles.png"},
-	paramtype = "light",
-	groups = {snappy=3, flammable=2},
-	drop = {
-		max_items = 1,
-		items = {
-			{items = {"moonrealm:psapling"}, rarity = 20},
-			{items = {"moonrealm:needles"}}
-		}
-	},
-	sounds = default.node_sound_leaves_defaults(),
-})
-
-minetest.register_node("moonrealm:psapling", {
-	description = "MR Pine Sapling",
+minetest.register_node("moonrealm:sapling", {
+	description = "MR Sapling",
 	drawtype = "plantlike",
 	visual_scale = 1.0,
-	tiles = {"moonrealm_psapling.png"},
-	inventory_image = "moonrealm_psapling.png",
-	wield_image = "moonrealm_psapling.png",
+	tiles = {"default_sapling.png"},
+	inventory_image = "default_sapling.png",
+	wield_image = "default_sapling.png",
 	paramtype = "light",
 	walkable = false,
 	groups = {snappy=2,dig_immediate=3,flammable=2},
 	sounds = default.node_sound_defaults(),
 })
 
+minetest.register_node("moonrealm:leaves", {
+	description = "MR Leaves",
+	drawtype = "allfaces_optional",
+	visual_scale = 1.3,
+	tiles = {"default_leaves.png"},
+	paramtype = "light",
+	groups = {snappy=3, leafdecay=3, flammable=2, leaves=1},
+	drop = {
+		max_items = 1,
+		items = {
+			{items = {"moonrealm:sapling"},rarity = 20,},
+			{items = {"moonrealm:leaves"},}
+		}
+	},
+	sounds = default.node_sound_leaves_defaults(),
+})
 
 minetest.register_node("moonrealm:moonstoneslab", {
 	description = "Moonstone Slab",
@@ -396,9 +396,9 @@ minetest.register_craft({
 minetest.register_craft({
     output = "moonrealm:hlsource",
     recipe = {
-        {"moonrealm:needles", "moonrealm:needles", "moonrealm:needles"},
-        {"moonrealm:needles", "moonrealm:waterice", "moonrealm:needles"},
-        {"moonrealm:needles", "moonrealm:needles", "moonrealm:needles"},
+        {"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
+        {"moonrealm:leaves", "moonrealm:waterice", "moonrealm:leaves"},
+        {"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
     },
 })
 

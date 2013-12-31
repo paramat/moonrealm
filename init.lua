@@ -1,7 +1,10 @@
--- moonrealm 0.5.1 by paramat
+-- moonrealm 0.5.2 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
+
+-- TODO
+-- apple tree instead
 
 -- Parameters
 
@@ -11,9 +14,8 @@ local ZMIN = -33000
 local ZMAX = 33000
 
 local YMIN = 14000 --  -- Approx lower limit
-local LHCLEV = 14968 --  -- Liquid hydrocarbon lake level
-local GRADCEN = 14968 --  -- Grad centre / terrain centre average level
-local ICELEV = 15048 --  -- Ice spawns above this altitude
+local LHCLEV = 15000 --  -- Liquid hydrocarbon lake level
+local GRADCEN = 14928 --  -- Grad centre / terrain centre average level
 local YMAX = 16000 --  -- Approx top of atmosphere
 
 local CENAMP = 128 --  -- Offset centre amplitude, terrain centre is varied by this
@@ -25,7 +27,8 @@ local LEXP = 2 --  -- Noise offset exponent below offcen
 local FISTS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
 local FISEXP = 0.05 --  -- Fissure expansion rate under surface
 
-local STOT = 0.05 --  -- Stone density threshold, depth of dust
+local STOT = 0.04 --  -- Stone density threshold, depth of dust at lake level
+local THIDIS = 128 --  -- Vertical thinning distance for dust
 local DUSRAN = 0.05 --  -- Dust blend randonmness
 
 local ICECHA = 11*11*11 --  -- Ice 1/x chance per dust node
@@ -38,10 +41,10 @@ local MESCHA = 23*23*23 --  -- Mese block 1/x chance
 local np_terrain = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x=512, y=512, z=512},
 	seed = 58588900033,
-	octaves = 5,
-	persist = 0.7
+	octaves = 6,
+	persist = 0.67
 }
 
 -- 3D noise for alt terrain, 414 / 256 = golden ratio
@@ -51,8 +54,8 @@ local np_terralt = {
 	scale = 1,
 	spread = {x=414, y=414, z=414},
 	seed = 13331930910,
-	octaves = 5,
-	persist = 0.7
+	octaves = 6,
+	persist = 0.67
 }
 
 -- 3D noise for fissures
@@ -88,9 +91,22 @@ local np_dust = {
 	persist = 0.5
 }
 
+-- 3D noise for faults
+
+local np_fault = {
+	offset = 0,
+	scale = 1,
+	spread = {x=414, y=828, z=414},
+	seed = 14440002,
+	octaves = 4,
+	persist = 0.5
+}
+
 -- Stuff
 
 moonrealm = {}
+
+local lhclevq = (80 * math.floor((LHCLEV + 32) / 80)) - 32 -- LHC level quantised to chunk minp.y
 
 dofile(minetest.get_modpath("moonrealm").."/nodes.lua")
 dofile(minetest.get_modpath("moonrealm").."/functions.lua")
@@ -222,14 +238,14 @@ minetest.register_abm({
 	end,
 })
 
--- Space pine from sapling
+-- Space appletree from sapling
 
 minetest.register_abm({
-	nodenames = {"moonrealm:psapling"},
+	nodenames = {"moonrealm:sapling"},
 	interval = 57,
 	chance = 2,
 	action = function(pos, node, active_object_count, active_object_count_wider)
-		moonrealm_pine(pos)
+		moonrealm_appletree(pos)
 	end,
 })
 
@@ -291,6 +307,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_fissure = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
 	local nvals_gradcen = minetest.get_perlin_map(np_gradcen, chulens):get3dMap_flat(minpos)
 	local nvals_dust = minetest.get_perlin_map(np_dust, chulens):get3dMap_flat(minpos)
+	local nvals_fault = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
 	local stable = {}
@@ -300,23 +317,33 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		end
 		for y = y0, y1 do
 			local vi = area:index(x0, y, z) -- LVM index for first node in x row
-			for x = x0, x1 do
+			for x = x0, x1 do -- for each node
 				local grad
-				local xr = x - x0
+				local density
+				local xr = x - x0 + 1 -- indexes start from 1
 				local cenoff = GRADCEN + nvals_gradcen[ni] * CENAMP
 				if y > cenoff then
 					grad = -((y - cenoff) / HIGRAD) ^ HEXP
 				else
 					grad = ((cenoff - y) / LOGRAD) ^ LEXP
 				end
-				local density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 + grad
+				if nvals_fault[ni] >= 0 then
+					density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 + grad
+				else	
+					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 + grad
+				end
+				
 				if density > 0 then -- if terrain
 					local nofis = false
 					if math.abs(nvals_fissure[ni]) > FISTS + math.sqrt(density) * FISEXP then
 						nofis = true
 					end
-					if density >= STOT and nofis -- stone, ores, also in upper fissures below liquid level
-					or (not nofis and y <= LHCLEV and density < STOT * 2) then
+					local stot = math.max((1 - (y - GRADCEN) / THIDIS) * STOT, 0)
+					local sandline = lhclevq + math.random(3)
+					
+					if density >= stot and nofis -- stone, ores 
+					or (not nofis and y <= sandline and density < STOT * 2) -- plug fissures under lakes
+					or (y <= sandline and density <= 1 and math.abs(nvals_fault[ni]) <= 0.05) then -- also near faults
 						if math.random(MESCHA) == 2 then
 							data[vi] = c_mese
 						elseif math.random(IROCHA) == 2 then
@@ -327,11 +354,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							data[vi] = c_mstone
 						end
 						stable[xr] = true
-					elseif density < STOT and stable[xr] then -- fine materials
-						if y <= LHCLEV + math.random(3) then -- moonsand below sandline, also in fissures
+					elseif density < stot then -- fine materials
+						if y <= sandline then
 							data[vi] = c_msand
-						elseif nofis or (not nofis and y <= LHCLEV and density < STOT * 2) then -- dusts, water ice
-							if math.random(ICECHA) == 2 then	-- also in upper fissures below liquid level
+						elseif nofis and stable[xr] then
+							if math.random(ICECHA) == 2 then
 								data[vi] = c_watice
 							elseif nvals_dust[ni] < -0.9 + (math.random() - 0.5) * DUSRAN then
 								data[vi] = c_mdust1
@@ -349,14 +376,14 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							stable[xr] = false
 						end
 					else -- fissure or unstable missing node
-						if y <= LHCLEV and density < STOT * 2 then
+						if y <= lhclevq and density < STOT * 2 then
 							data[vi] = c_lhcsour
 						else
 							data[vi] = c_atmos
 						end
 						stable[xr] = false
 					end
-				elseif y <= LHCLEV then -- if lake then
+				elseif y <= lhclevq then -- if lake then
 					data[vi] = c_lhcsour
 					stable[xr] = false
 				else -- atmosphere
@@ -366,11 +393,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				ni = ni + 1
 				vi = vi + 1
 			end
-			--for si = 1, 80 do
-				--if stable[si] then
-					--print (si)
-				--end
-			--end
 		end
 	end
 	

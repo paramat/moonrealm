@@ -1,5 +1,4 @@
-function moonrealm_pine(pos)
-	local env = minetest.env
+function moonrealm_appletree(pos)
 	local x = pos.x
 	local y = pos.y
 	local z = pos.z
@@ -39,5 +38,5 @@ function moonrealm_pine(pos)
 	for j = t - 1, t do
 		env:add_node({x=x,y=y+j,z=z},{name="moonrealm:needles"})
 	end
-	print ("[moonrealm] Pine sapling grows ("..x.." "..y.." "..z..")")
+	print ("[moonrealm] Appletree sapling grows ("..x.." "..y.." "..z..")")
 end
