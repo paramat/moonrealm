@@ -13,45 +13,9 @@ minetest.register_node("moonrealm:ironore", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:moondust1", {
-	description = "Moon Dust 1",
-	tiles = {"moonrealm_moondust1.png"},
-	groups = {crumbly=3, falling_node=1},
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.09},
-	}),
-})
-
-minetest.register_node("moonrealm:moondust2", {
-	description = "Moon Dust 2",
-	tiles = {"moonrealm_moondust2.png"},
-	groups = {crumbly=3, falling_node=1},
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.08},
-	}),
-})
-
-minetest.register_node("moonrealm:moondust3", {
-	description = "Moon Dust 3",
-	tiles = {"moonrealm_moondust3.png"},
-	groups = {crumbly=3, falling_node=1},
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.07},
-	}),
-})
-
-minetest.register_node("moonrealm:moondust4", {
-	description = "Moon Dust 4",
-	tiles = {"moonrealm_moondust4.png"},
-	groups = {crumbly=3, falling_node=1},
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.06},
-	}),
-})
-
-minetest.register_node("moonrealm:moondust5", {
-	description = "Moon Dust 5",
-	tiles = {"moonrealm_moondust5.png"},
+minetest.register_node("moonrealm:moondust", {
+	description = "Moon Dust",
+	tiles = {"moonrealm_moondust.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.05},
@@ -448,7 +412,7 @@ minetest.register_craft({
 minetest.register_craft({
 	type = "cooking",
 	output = "moonrealm:moonglass",
-	recipe = "moonrealm:moondust1",
+	recipe = "moonrealm:moonsand",
 })
 
 -- Fuel

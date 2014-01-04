@@ -1,4 +1,4 @@
-moonrealm 0.5.2 by paramat
+moonrealm 0.5.3 by paramat
 For latest stable Minetest and back to 0.4.8
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
@@ -24,10 +24,10 @@ I = waterice
 L = luxnode
 
 hlsource
-NNN
-NIN
-NNN
-N = moonrealm:needles
+LLL
+LIL
+LLL
+L = moonrealm:leaves
 I = waterice
 
 airlock
