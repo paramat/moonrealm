@@ -1,7 +1,13 @@
--- moonrealm 0.5.3 by paramat
+-- moonrealm 0.6.0 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
+
+-- TODO
+-- Footprints
+-- Smooth terrain with blend?
+-- Craters, old eroded massive plus fresh small plus random strikes
+-- Vacuum nodes with damage unless spacesuit
 
 -- Parameters
 
@@ -11,7 +17,6 @@ local ZMIN = -33000
 local ZMAX = 33000
 
 local YMIN = 14000 --  -- Approx lower limit
-local LHCLEV = 15024 --  -- Liquid hydrocarbon lake level
 local GRADCEN = 15024 --  -- Grad centre / terrain centre average level
 local YMAX = 16000 --  -- Approx top of atmosphere
 
@@ -29,8 +34,7 @@ local THIDIS = 192 --  -- Vertical thinning distance for dust
 local ICECHA = 13*13*13 --  -- Ice 1/x chance per dust node
 
 local ORECHA = 7*7*7 --  -- Ore 1/x chance per moonstone node
-local LUXCHA = 3 --  -- Luxore 1/x chance, otherwise ironore
-local MESCHA = 32 --  -- Mese block 1/x chance
+local MESCHA = 32 --  -- Mese block 1/x chance, else ironore
 
 -- 3D noise for terrain
 
@@ -76,17 +80,6 @@ local np_gradcen = {
 	persist = 0.6
 }
 
--- 3D noise for strata
-
-local np_strata = {
-	offset = 0,
-	scale = 1,
-	spread = {x=512, y=512, z=512},
-	seed = 44,
-	octaves = 4,
-	persist = 0.5
-}
-
 -- 3D noise for faults
 
 local np_fault = {
@@ -105,7 +98,7 @@ moonrealm = {}
 dofile(minetest.get_modpath("moonrealm").."/nodes.lua")
 dofile(minetest.get_modpath("moonrealm").."/functions.lua")
 
--- On dignode function, atmosphere or air flows into a dug hole from  face-connected neighbours only
+-- On dignode function, vacuum or air flows into a dug hole from face-connected neighbours only
 
 if ATMOS then
 	minetest.register_on_dignode(function(pos, oldnode, digger)
@@ -117,9 +110,9 @@ if ATMOS then
 		for k = -1,1 do
 			if math.abs(i) + math.abs(j) + math.abs(k) == 1 then
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:atmos" then -- atmos has priority to avoid air lweaks
-					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:atmos"})
-					print ("[moonrealm] Atmosphere flows into hole")
+				if nodename == "moonrealm:vacuum" then -- vacuum has priority to avoid air lweaks
+					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:vacuum"})
+					print ("[moonrealm] Vacuum flows into hole")
 					return
 				elseif nodename == "moonrealm:air" then	
 					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
@@ -133,14 +126,14 @@ if ATMOS then
 	end)
 end
 
---  -- ABMs
+-- ABMs
 
 -- Air spreads into face-connected neighbours
 
 if ATMOS and AIRGEN then
 	minetest.register_abm({
 		nodenames = {"moonrealm:air"},
-		neighbors = {"moonrealm:atmos"},
+		neighbors = {"moonrealm:vacuum"},
 		interval = 29,
 		chance = 9,
 		action = function(pos, node, active_object_count, active_object_count_wider)
@@ -148,6 +141,7 @@ if ATMOS and AIRGEN then
 			local y = pos.y
 			local z = pos.z
 			local nodair = 0
+			local nodvac = 0
 			for i = -1,1 do
 			for j = -1,1 do
 			for k = -1,1 do
@@ -155,20 +149,22 @@ if ATMOS and AIRGEN then
 					local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
 					if nodename == "moonrealm:air" then
 						nodair = nodair + 1
+					elseif nodename == "moonrealm:vacuum" then
+						nodair = nodvac + 1
 					end
 				end
 			end
 			end
 			end
-			if nodair < 2 then
+			if nodair == 0 or nodvac >= 17 then
 				return
 			end
 			for i = -1,1 do
 			for j = -1,1 do
 			for k = -1,1 do
-				if math.abs(i) + math.abs(j) + math.abs(k) == 1 then
+				if math.abs(i) + math.abs(j) + math.abs(k) == 1 then -- face connected neighbours
 					local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-					if nodename == "moonrealm:atmos" then
+					if nodename == "moonrealm:vacuum" then
 						minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
 						print ("[moonrealm] Air spreads")
 					end
@@ -184,7 +180,7 @@ end
 
 minetest.register_abm({
 	nodenames = {"moonrealm:hlsource", "moonrealm:hlflowing"},
-	neighbors = {"moonrealm:moondust"},
+	neighbors = {"moonrealm:dust"},
 	interval = 31,
 	chance = 9,
 	action = function(pos, node, active_object_count, active_object_count_wider)
@@ -196,8 +192,8 @@ minetest.register_abm({
 		for k = -1,1 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:moondust" then
-					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:moonsoil"})
+				if nodename == "moonrealm:dust" then
+					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:soil"})
 					print ("[moonrealm] Hydroponic liquid saturates ("..i.." "..j.." "..k..")")
 				end
 			end
@@ -208,7 +204,7 @@ minetest.register_abm({
 })
 
 minetest.register_abm({
-	nodenames = {"moonrealm:moonsoil"},
+	nodenames = {"moonrealm:soil"},
 	interval = 31,
 	chance = 27,
 	action = function(pos, node)
@@ -227,7 +223,7 @@ minetest.register_abm({
 		end
 		end
 		end
-		minetest.add_node(pos,{name="moonrealm:moondust"})
+		minetest.add_node(pos,{name="moonrealm:dust"})
 		print ("[moonrealm] Moonsoil dries ("..x.." "..y.." "..z..")")
 	end,
 })
@@ -240,18 +236,6 @@ minetest.register_abm({
 	chance = 2,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		moonrealm_appletree(pos)
-	end,
-})
-
--- Update luxore lighting to spread light underground
-
-minetest.register_abm({
-	nodenames = {"moonrealm:luxoff"},
-	interval = 23,
-	chance = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		minetest.remove_node(pos)
-		minetest.place_node(pos,{name="moonrealm:luxore"})
 	end,
 })
 
@@ -280,14 +264,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	
 	local c_mese = minetest.get_content_id("default:mese")
 	local c_ironore = minetest.get_content_id("moonrealm:ironore")
-	local c_luxoff = minetest.get_content_id("moonrealm:luxoff")
-	local c_mstone = minetest.get_content_id("moonrealm:moonstone")
-	local c_obsidian = minetest.get_content_id("default:obsidian")
-	local c_msand = minetest.get_content_id("moonrealm:moonsand")
+	local c_mstone = minetest.get_content_id("moonrealm:stone")
 	local c_watice = minetest.get_content_id("moonrealm:waterice")
-	local c_mdust = minetest.get_content_id("moonrealm:moondust")
-	local c_atmos = minetest.get_content_id("moonrealm:atmos")
-	local c_lhcsour = minetest.get_content_id("moonrealm:lhcsource")
+	local c_mdust = minetest.get_content_id("moonrealm:dust")
+	local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
 	
 	local sidelen = x1 - x0 + 1
 	local chulens = {x=sidelen, y=sidelen, z=sidelen}
@@ -297,7 +277,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_terralt = minetest.get_perlin_map(np_terralt, chulens):get3dMap_flat(minpos)
 	local nvals_fissure = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
 	local nvals_gradcen = minetest.get_perlin_map(np_gradcen, chulens):get3dMap_flat(minpos)
-	local nvals_strata = minetest.get_perlin_map(np_strata, chulens):get3dMap_flat(minpos)
 	local nvals_fault = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
@@ -306,7 +285,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		for x = x0, x1 do
 			local si = x - x0 + 1
 			local nodename = minetest.get_node({x=x,y=y0-1,z=z}).name
-			if nodename == "air" or nodename == "default:water_source" then
+			if nodename == "moonrealm:vacuum" then
 				stable[si] = false
 			else -- solid nodes and ignore in ungenerated chunks
 				stable[si] = true
@@ -336,19 +315,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						nofis = true
 					end
 					local stot = math.max((1 - (y - GRADCEN) / THIDIS) * STOT, 0)
-					local sandline = LHCLEV + math.random(3)
 					
-					if density >= stot and nofis -- stone, ores 
-					or (not nofis and y <= sandline and density < STOT * 2) -- plug fissures under lakes
-					or (y <= sandline and density <= 1 and math.abs(nvals_fault[ni]) <= 0.05) then -- also near faults
-						local nstrata = nvals_strata[ni] / 2 + grad
-						if math.sin(nstrata * 60) > 0.5 then -- periodic strata
-							data[vi] = c_obsidian
-						elseif math.random(ORECHA) == 2 then
+					if density >= stot and nofis then -- stone, ores 
+						if math.random(ORECHA) == 2 then
 							if math.random(MESCHA) == 2 then
 								data[vi] = c_mese
-							elseif math.random(LUXCHA) == 2 then
-								data[vi] = c_luxoff
 							else
 								data[vi] = c_ironore
 							end
@@ -357,31 +328,22 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						end
 						stable[si] = true
 					elseif density < stot then -- fine materials
-						if y <= sandline then
-							data[vi] = c_msand
-						elseif nofis and stable[si] then
+						if nofis and stable[si] then
 							if math.random(ICECHA) == 2 then
 								data[vi] = c_watice
 							else
 								data[vi] = c_mdust
 							end
-						else -- fissure above liquid level or deep
-							data[vi] = c_atmos
+						else -- fissure
+							data[vi] = c_vacuum
 							stable[si] = false
 						end
 					else -- fissure or unstable missing node
-						if y <= LHCLEV and density < STOT * 2 then
-							data[vi] = c_lhcsour
-						else
-							data[vi] = c_atmos
-						end
+						data[vi] = c_vacuum
 						stable[si] = false
 					end
-				elseif y <= LHCLEV then -- if lake then
-					data[vi] = c_lhcsour
-					stable[si] = false
-				else -- atmosphere
-					data[vi] = c_atmos
+				else -- vacuum
+					data[vi] = c_vacuum
 					stable[si] = false
 				end
 				ni = ni + 1

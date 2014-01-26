@@ -34,3 +34,17 @@ function moonrealm_appletree(pos)
 	end
 	print ("[moonrealm] Appletree sapling grows ("..x.." "..y.." "..z..")")
 end
+
+-- Globalstep function
+
+minetest.register_globalstep(function(dtime)
+	for _, player in ipairs(minetest.get_connected_players()) do
+		if math.random() > 0.1 then
+			return
+		end
+		if player:get_inventory():contains_item("main", "moonrealm:spacesuit")
+		and player:get_breath() < 10 then
+			player:set_breath(10)
+		end	
+	end
+end)

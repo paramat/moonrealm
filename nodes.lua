@@ -1,61 +1,29 @@
-minetest.register_node("moonrealm:moonstone", {
-	description = "Moon Stone",
-	tiles = {"moonrealm_moonstone.png"},
+minetest.register_node("moonrealm:stone", {
+	description = "Moonstone",
+	tiles = {"moonrealm_stone.png"},
 	groups = {cracky=3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_node("moonrealm:ironore", {
-	description = "Iron Ore",
-	tiles = {"moonrealm_moonstone.png^default_mineral_iron.png"},
+	description = "MR Iron Ore",
+	tiles = {"moonrealm_stone.png^default_mineral_iron.png"},
 	groups = {cracky=2},
 	drop = "default:iron_lump",
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:moondust", {
-	description = "Moon Dust",
-	tiles = {"moonrealm_moondust.png"},
+minetest.register_node("moonrealm:dust", {
+	description = "Moondust",
+	tiles = {"moonrealm_dust.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_gravel_footstep", gain=0.05},
 	}),
 })
 
-minetest.register_node("moonrealm:moonsand", {
-	description = "Moonsand",
-	tiles = {"moonrealm_moonsand.png"},
-	groups = {crumbly=3},
-	sounds = default.node_sound_sand_defaults(),
-})
-
-minetest.register_node("moonrealm:luxoff", {
-	description = "MR Lux Ore Temporary",
-	tiles = {"moonrealm_luxore.png"},
-	light_source = 13,
-	groups = {cracky=2},
-	drop = "moonrealm:luxcrystal 9",
-	sounds = default.node_sound_stone_defaults(),
-})
-
-minetest.register_node("moonrealm:luxore", {
-	description = "MR Lux Ore",
-	tiles = {"moonrealm_luxore.png"},
-	light_source = 13,
-	groups = {cracky=2},
-	drop = "moonrealm:luxcrystal 9",
-	sounds = default.node_sound_stone_defaults(),
-})
-
-minetest.register_node("moonrealm:luxnode", {
-	description = "MR Lux Node",
-	tiles = {"moonrealm_luxnode.png"},
-	light_source = 14,
-	groups = {cracky=1},
-	sounds = default.node_sound_glass_defaults(),
-})
-
-minetest.register_node("moonrealm:atmos", {
+minetest.register_node("moonrealm:vacuum", {
+	description = "Vacuum",
 	drawtype = "airlike",
 	paramtype = "light",
 	sunlight_propagates = true,
@@ -63,17 +31,20 @@ minetest.register_node("moonrealm:atmos", {
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
-	post_effect_color = {a=16, r=255, g=148, b=0},
+	drowning = 1,
 })
 
 minetest.register_node("moonrealm:air", {
-	drawtype = "airlike",
+	description = "Life Support Air",
+	drawtype = "glasslike",
+	tiles = {"moonrealm_air.png"},
 	paramtype = "light",
 	sunlight_propagates = true,
 	walkable = false,
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
+	post_effect_color = {a=16, r=0, g=0, b=16},
 })
 
 minetest.register_node("moonrealm:airgen", {
@@ -91,7 +62,7 @@ minetest.register_node("moonrealm:airgen", {
 		for k = -1,1 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodename = env:get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:atmos" then
+				if nodename == "moonrealm:vacuum" then
 					env:add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
 					print ("[moonrealm] Added air node")
 				end
@@ -114,7 +85,7 @@ minetest.register_node("moonrealm:waterice", {
 })
 
 minetest.register_node("moonrealm:hlflowing", {
-	description = "Flowing HL",
+	description = "Flowing Hydroponics",
 	inventory_image = minetest.inventorycube("moonrealm_hl.png"),
 	drawtype = "flowingliquid",
 	tiles = {"moonrealm_hl.png"},
@@ -145,7 +116,7 @@ minetest.register_node("moonrealm:hlflowing", {
 })
 
 minetest.register_node("moonrealm:hlsource", {
-	description = "HL Source",
+	description = "Hydroponic Source",
 	inventory_image = minetest.inventorycube("moonrealm_hl.png"),
 	drawtype = "liquid",
 	tiles = {"moonrealm_hl.png"},
@@ -163,10 +134,10 @@ minetest.register_node("moonrealm:hlsource", {
 })
 
 minetest.register_node("moonrealm:moonsoil", {
-	description = "Moon Soil",
-	tiles = {"moonrealm_moonsoil.png"},
+	description = "Moonsoil",
+	tiles = {"moonrealm_soil.png"},
 	groups = {crumbly=3, falling_node=1},
-	drop = "moonrealm:moondust5",
+	drop = "moonrealm:dust",
 	sounds = default.node_sound_dirt_defaults(),
 })
 
@@ -180,17 +151,10 @@ minetest.register_node("moonrealm:airlock", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:moonstonebrick", {
-	description = "Moonstone Brick",
-	tiles = {"moonrealm_moonstonebricktop.png", "moonrealm_moonstonebrickbot.png", "moonrealm_moonstonebrick.png"},
-	groups = {cracky=3},
-	sounds = default.node_sound_stone_defaults(),
-})
-
-minetest.register_node("moonrealm:moonglass", {
-	description = "Moon Glass",
+minetest.register_node("moonrealm:glass", {
+	description = "Moonglass",
 	drawtype = "glasslike",
-	tiles = {"moonrealm_moonglass.png"},
+	tiles = {"moonrealm_glass.png"},
 	paramtype = "light",
 	sunlight_propagates = true,
 	groups = {snappy=2,cracky=3,oddly_breakable_by_hand=3},
@@ -227,9 +191,16 @@ minetest.register_node("moonrealm:leaves", {
 	sounds = default.node_sound_leaves_defaults(),
 })
 
-minetest.register_node("moonrealm:moonstoneslab", {
+minetest.register_node("moonrealm:stonebrick", {
+	description = "Moonstone Brick",
+	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
+	groups = {cracky=3},
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:stoneslab", {
 	description = "Moonstone Slab",
-	tiles = {"moonrealm_moonstonebricktop.png", "moonrealm_moonstonebrickbot.png", "moonrealm_moonstonebrick.png"},
+	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
 	drawtype = "nodebox",
 	paramtype = "light",
 	sunlight_propagates = true,
@@ -250,9 +221,9 @@ minetest.register_node("moonrealm:moonstoneslab", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:moonstonestair", {
-	description = "MR Moonstone Stair",
-	tiles = {"moonrealm_moonstonebricktop.png", "moonrealm_moonstonebrickbot.png", "moonrealm_moonstonebrick.png"},
+minetest.register_node("moonrealm:stonestair", {
+	description = "Moonstone Stair",
+	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
 	drawtype = "nodebox",
 	paramtype = "light",
 	paramtype2 = "facedir",
@@ -274,78 +245,21 @@ minetest.register_node("moonrealm:moonstonestair", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:lhcflowing", {
-	description = "Flowing Liquid Hydrocarbons",
-	inventory_image = minetest.inventorycube("moonrealm_lhc.png"),
-	drawtype = "flowingliquid",
-	tiles = {"moonrealm_lhc.png"},
-	special_tiles = {
-		{
-			image="moonrealm_lhcflowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2}
-		},
-		{
-			image="moonrealm_lhcflowing_animated.png",
-			backface_culling=true,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2}
-		},
-	},
-	alpha = 192,
-	paramtype = "light",
-	walkable = false,
-	pointable = false,
-	diggable = false,
-	buildable_to = true,
-	liquidtype = "flowing",
-	liquid_alternative_flowing = "moonrealm:lhcflowing",
-	liquid_alternative_source = "moonrealm:lhcsource",
-	liquid_viscosity = 1,
-	post_effect_color = {a=128, r=140, g=19, b=0},
-	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
-})
+-- Items
 
-minetest.register_node("moonrealm:lhcsource", {
-	description = "Liquid Hydrocarbon Source",
-	inventory_image = minetest.inventorycube("moonrealm_lhc.png"),
-	drawtype = "liquid",
-	tiles = {"moonrealm_lhc.png"},
-	alpha = 192,
-	paramtype = "light",
-	walkable = false,
-	pointable = false,
-	buildable_to = true,
-	liquidtype = "source",
-	liquid_alternative_flowing = "moonrealm:lhcflowing",
-	liquid_alternative_source = "moonrealm:lhcsource",
-	liquid_viscosity = 1,
-	post_effect_color = {a=128, r=140, g=19, b=0},
-	groups = {water=3, liquid=3, puts_out_fire=1},
-})
-
--- Item
-
-minetest.register_craftitem("moonrealm:luxcrystal", {
-	description = "MR Lux Crystal",
-	inventory_image = "moonrealm_luxcrystal.png",
+minetest.register_craftitem("moonrealm:spacesuit", {
+	description = "MR Spacesuit",
+	inventory_image = "moonrealm_spacesuit.png",
+	--groups = {not_in_creative_inventory=1},
 })
 
 -- Crafting
 
 minetest.register_craft({
-    output = "moonrealm:luxnode",
-    recipe = {
-        {"moonrealm:luxcrystal", "moonrealm:luxcrystal", "moonrealm:luxcrystal"},
-        {"moonrealm:luxcrystal", "moonrealm:luxcrystal", "moonrealm:luxcrystal"},
-        {"moonrealm:luxcrystal", "moonrealm:luxcrystal", "moonrealm:luxcrystal"},
-    },
-})
-
-minetest.register_craft({
     output = "moonrealm:airgen",
     recipe = {
         {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
-        {"moonrealm:waterice", "moonrealm:luxnode", "moonrealm:waterice"},
+        {"moonrealm:waterice", "", "moonrealm:waterice"},
         {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
     },
 })
@@ -367,18 +281,18 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = "moonrealm:moonstonebrick 4",
+	output = "moonrealm:stonebrick 4",
 	recipe = {
-		{"moonrealm:moonstone", "moonrealm:moonstone"},
-		{"moonrealm:moonstone", "moonrealm:moonstone"},
+		{"moonrealm:stone", "moonrealm:stone"},
+		{"moonrealm:stone", "moonrealm:stone"},
 	}
 })
 
 minetest.register_craft({
-	output = "moonrealm:moonstonestair 4",
+	output = "moonrealm:stonestair 4",
 	recipe = {
-		{"moonrealm:moonstone", ""},
-		{"moonrealm:moonstone", "moonrealm:moonstone"},
+		{"moonrealm:stone", ""},
+		{"moonrealm:stone", "moonrealm:stone"},
 	}
 })
 
@@ -386,7 +300,7 @@ minetest.register_craft({
     output = "moonrealm:airlock",
     recipe = {
         {"default:steel_ingot", "", "default:steel_ingot"},
-        {"default:steel_ingot", "moonrealm:luxnode", "default:steel_ingot"},
+        {"default:steel_ingot", "", "default:steel_ingot"},
         {"default:steel_ingot", "", "default:steel_ingot"},
     },
 })
@@ -394,16 +308,16 @@ minetest.register_craft({
 minetest.register_craft({
     output = "default:furnace",
     recipe = {
-        {"moonrealm:moonstone", "moonrealm:moonstone", "moonrealm:moonstone"},
-        {"moonrealm:moonstone", "", "moonrealm:moonstone"},
-        {"moonrealm:moonstone", "moonrealm:moonstone", "moonrealm:moonstone"},
+        {"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
+        {"moonrealm:stone", "", "moonrealm:stone"},
+        {"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
     },
 })
 
 minetest.register_craft({
-	output = "moonrealm:moonstoneslab 4",
+	output = "moonrealm:stoneslab 4",
 	recipe = {
-		{"moonrealm:moonstone", "moonrealm:moonstone"},
+		{"moonrealm:stone", "moonrealm:stone"},
 	}
 })
 
@@ -411,14 +325,6 @@ minetest.register_craft({
 
 minetest.register_craft({
 	type = "cooking",
-	output = "moonrealm:moonglass",
-	recipe = "moonrealm:moonsand",
-})
-
--- Fuel
-
-minetest.register_craft({
-	type = "fuel",
-	recipe = "moonrealm:luxcrystal",
-	burntime = 50,
+	output = "moonrealm:glass",
+	recipe = "moonrealm:dust",
 })
