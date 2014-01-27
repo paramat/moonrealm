@@ -1,13 +1,12 @@
--- moonrealm 0.6.0 by paramat
+-- moonrealm 0.6.1 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
 -- TODO
 -- Footprints
--- Smooth terrain with blend?
--- Craters, old eroded massive plus fresh small plus random strikes
--- Vacuum nodes with damage unless spacesuit
+-- Smooth terrain
+-- Craters
 
 -- Parameters
 
@@ -17,8 +16,8 @@ local ZMIN = -33000
 local ZMAX = 33000
 
 local YMIN = 14000 --  -- Approx lower limit
-local GRADCEN = 15024 --  -- Grad centre / terrain centre average level
-local YMAX = 16000 --  -- Approx top of atmosphere
+local GRADCEN = 15000 --  -- Grad centre / terrain centre average level
+local YMAX = 16000 --  -- Approx upper limit
 
 local CENAMP = 128 --  -- Grad centre amplitude, terrain centre is varied by this
 local HIGRAD = 128 --  -- Surface generating noise gradient above gradcen, controls depth of upper terrain
@@ -29,12 +28,11 @@ local LEXP = 2 --  -- Noise offset exponent below gradcen
 local FISTS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
 local FISEXP = 0.05 --  -- Fissure expansion rate under surface
 
-local STOT = 0.04 --  -- Stone density threshold, depth of dust at lake level
+local STOT = 0.04 --  -- Stone density threshold, depth of dust at terrain centre
 local THIDIS = 192 --  -- Vertical thinning distance for dust
 local ICECHA = 13*13*13 --  -- Ice 1/x chance per dust node
 
-local ORECHA = 7*7*7 --  -- Ore 1/x chance per moonstone node
-local MESCHA = 32 --  -- Mese block 1/x chance, else ironore
+local ORECHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
 -- 3D noise for terrain
 
@@ -63,7 +61,7 @@ local np_terralt = {
 local np_fissure = {
 	offset = 0,
 	scale = 1,
-	spread = {x=207, y=207, z=207},
+	spread = {x=256, y=256, z=256},
 	seed = 8181112,
 	octaves = 5,
 	persist = 0.5
@@ -98,83 +96,100 @@ moonrealm = {}
 dofile(minetest.get_modpath("moonrealm").."/nodes.lua")
 dofile(minetest.get_modpath("moonrealm").."/functions.lua")
 
--- On dignode function, vacuum or air flows into a dug hole from face-connected neighbours only
+-- Globalstep function
 
-if ATMOS then
-	minetest.register_on_dignode(function(pos, oldnode, digger)
-		local x = pos.x
-		local y = pos.y
-		local z = pos.z
-		for i = -1,1 do
-		for j = -1,1 do
-		for k = -1,1 do
-			if math.abs(i) + math.abs(j) + math.abs(k) == 1 then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:vacuum" then -- vacuum has priority to avoid air lweaks
-					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:vacuum"})
-					print ("[moonrealm] Vacuum flows into hole")
-					return
-				elseif nodename == "moonrealm:air" then	
-					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
-					print ("[moonrealm] Air flows into hole")
-					return
-				end
+minetest.register_globalstep(function(dtime)
+	for _, player in ipairs(minetest.get_connected_players()) do
+		if math.random() < 0.1 then
+			if player:get_inventory():contains_item("main", "moonrealm:spacesuit")
+			and player:get_breath() < 10 then
+				player:set_breath(10)
 			end
 		end
+		if math.random() > 0.99 then
+			local pos = player:getpos()
+			if pos.y > YMIN and pos.y < YMAX then
+				player:set_physics_override(1, 0.6, 0.2)
+			else
+				player:set_physics_override(1, 1, 1) -- speed, jump, gravity
+			end
 		end
+	end
+end)
+
+-- On dignode function, vacuum or air flows into a dug hole from face-connected neighbours only
+
+minetest.register_on_dignode(function(pos, oldnode, digger)
+	local x = pos.x
+	local y = pos.y
+	local z = pos.z
+	for i = -1,1 do
+	for j = -1,1 do
+	for k = -1,1 do
+		if math.abs(i) + math.abs(j) + math.abs(k) == 1 then
+			local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
+			if nodename == "moonrealm:vacuum" then -- vacuum has priority to avoid air lweaks
+				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:vacuum"})
+				print ("[moonrealm] Vacuum flows into hole")
+				return
+			elseif nodename == "moonrealm:air" then	
+				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
+				print ("[moonrealm] Air flows into hole")
+				return
+			end
 		end
-	end)
-end
+	end
+	end
+	end
+end)
 
 -- ABMs
 
 -- Air spreads into face-connected neighbours
 
-if ATMOS and AIRGEN then
-	minetest.register_abm({
-		nodenames = {"moonrealm:air"},
-		neighbors = {"moonrealm:vacuum"},
-		interval = 29,
-		chance = 9,
-		action = function(pos, node, active_object_count, active_object_count_wider)
-			local x = pos.x
-			local y = pos.y
-			local z = pos.z
-			local nodair = 0
-			local nodvac = 0
-			for i = -1,1 do
-			for j = -1,1 do
-			for k = -1,1 do
-				if not (i == 0 and j == 0 and k == 0) then
-					local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-					if nodename == "moonrealm:air" then
-						nodair = nodair + 1
-					elseif nodename == "moonrealm:vacuum" then
-						nodair = nodvac + 1
-					end
+minetest.register_abm({
+	nodenames = {"moonrealm:air"},
+	neighbors = {"moonrealm:vacuum"},
+	interval = 29,
+	chance = 9,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local x = pos.x
+		local y = pos.y
+		local z = pos.z
+		local nodair = 0
+		local nodvac = 0
+		for i = -1,1 do
+		for j = -1,1 do
+		for k = -1,1 do
+			if not (i == 0 and j == 0 and k == 0) then
+				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
+				if nodename == "moonrealm:air" then
+					nodair = nodair + 1
+				elseif nodename == "moonrealm:vacuum" then
+					nodair = nodvac + 1
 				end
-			end
-			end
-			end
-			if nodair == 0 or nodvac >= 17 then
-				return
-			end
-			for i = -1,1 do
-			for j = -1,1 do
-			for k = -1,1 do
-				if math.abs(i) + math.abs(j) + math.abs(k) == 1 then -- face connected neighbours
-					local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-					if nodename == "moonrealm:vacuum" then
-						minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
-						print ("[moonrealm] Air spreads")
-					end
-				end
-			end
-			end
 			end
 		end
-	})
-end
+		end
+		end
+		if nodair == 0 or nodvac >= 17 then
+			return
+		end
+		for i = -1,1 do
+		for j = -1,1 do
+		for k = -1,1 do
+			if math.abs(i) + math.abs(j) + math.abs(k) == 1 then -- face connected neighbours
+				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
+				if nodename == "moonrealm:vacuum" then
+					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
+					print ("[moonrealm] Air spreads")
+				end
+			end
+		end
+		end
+		end
+	end
+})
 
 -- Hydroponics, saturation and drying
 
@@ -224,7 +239,7 @@ minetest.register_abm({
 		end
 		end
 		minetest.add_node(pos,{name="moonrealm:dust"})
-		print ("[moonrealm] Moonsoil dries ("..x.." "..y.." "..z..")")
+		print ("[moonrealm] Moon soil dries ("..x.." "..y.." "..z..")")
 	end,
 })
 
@@ -263,10 +278,13 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local data = vm:get_data()
 	
 	local c_mese = minetest.get_content_id("default:mese")
-	local c_ironore = minetest.get_content_id("moonrealm:ironore")
-	local c_mstone = minetest.get_content_id("moonrealm:stone")
-	local c_watice = minetest.get_content_id("moonrealm:waterice")
-	local c_mdust = minetest.get_content_id("moonrealm:dust")
+	local c_mrironore = minetest.get_content_id("moonrealm:ironore")
+	local c_mrcopperore = minetest.get_content_id("moonrealm:copperore")
+	local c_mrgoldore = minetest.get_content_id("moonrealm:goldore")
+	local c_mrdiamondore = minetest.get_content_id("moonrealm:diamondore")
+	local c_mrstone = minetest.get_content_id("moonrealm:stone")
+	local c_waterice = minetest.get_content_id("moonrealm:waterice")
+	local c_dust = minetest.get_content_id("moonrealm:dust")
 	local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
 	
 	local sidelen = x1 - x0 + 1
@@ -318,21 +336,28 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					
 					if density >= stot and nofis then -- stone, ores 
 						if math.random(ORECHA) == 2 then
-							if math.random(MESCHA) == 2 then
+							local osel = math.random(25)
+							if osel == 25 then
 								data[vi] = c_mese
+							elseif osel >= 22 then
+								data[vi] = c_mrdiamondore
+							elseif osel >= 19 then
+								data[vi] = c_mrgoldore
+							elseif osel >= 10 then
+								data[vi] = c_mrcopperore
 							else
-								data[vi] = c_ironore
+								data[vi] = c_mrironore
 							end
 						else
-							data[vi] = c_mstone
+							data[vi] = c_mrstone
 						end
 						stable[si] = true
 					elseif density < stot then -- fine materials
 						if nofis and stable[si] then
 							if math.random(ICECHA) == 2 then
-								data[vi] = c_watice
+								data[vi] = c_waterice
 							else
-								data[vi] = c_mdust
+								data[vi] = c_dust
 							end
 						else -- fissure
 							data[vi] = c_vacuum

@@ -1,5 +1,5 @@
 minetest.register_node("moonrealm:stone", {
-	description = "Moonstone",
+	description = "Moon Stone",
 	tiles = {"moonrealm_stone.png"},
 	groups = {cracky=3},
 	sounds = default.node_sound_stone_defaults(),
@@ -13,12 +13,36 @@ minetest.register_node("moonrealm:ironore", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
+minetest.register_node("moonrealm:copperore", {
+	description = "MR Copper Ore",
+	tiles = {"moonrealm_stone.png^default_mineral_copper.png"},
+	groups = {cracky=2},
+	drop = "default:copper_lump",
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:goldore", {
+	description = "MR Gold Ore",
+	tiles = {"moonrealm_stone.png^default_mineral_gold.png"},
+	groups = {cracky=2},
+	drop = "default:gold_lump",
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:diamondore", {
+	description = "MR Diamond Ore",
+	tiles = {"moonrealm_stone.png^default_mineral_diamond.png"},
+	groups = {cracky=1},
+	drop = "default:diamond",
+	sounds = default.node_sound_stone_defaults(),
+})
+
 minetest.register_node("moonrealm:dust", {
-	description = "Moondust",
+	description = "Moon Dust",
 	tiles = {"moonrealm_dust.png"},
 	groups = {crumbly=3, falling_node=1},
 	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.05},
+		footstep = {name="default_gravel_footstep", gain=0.1},
 	}),
 })
 
@@ -133,7 +157,7 @@ minetest.register_node("moonrealm:hlsource", {
 	groups = {water=3, liquid=3, puts_out_fire=1},
 })
 
-minetest.register_node("moonrealm:moonsoil", {
+minetest.register_node("moonrealm:soil", {
 	description = "Moonsoil",
 	tiles = {"moonrealm_soil.png"},
 	groups = {crumbly=3, falling_node=1},
@@ -152,12 +176,12 @@ minetest.register_node("moonrealm:airlock", {
 })
 
 minetest.register_node("moonrealm:glass", {
-	description = "Moonglass",
+	description = "MR Glass",
 	drawtype = "glasslike",
-	tiles = {"moonrealm_glass.png"},
+	tiles = {"default_obsidian_glass.png"},
 	paramtype = "light",
 	sunlight_propagates = true,
-	groups = {snappy=2,cracky=3,oddly_breakable_by_hand=3},
+	groups = {cracky=3,oddly_breakable_by_hand=3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -192,14 +216,14 @@ minetest.register_node("moonrealm:leaves", {
 })
 
 minetest.register_node("moonrealm:stonebrick", {
-	description = "Moonstone Brick",
+	description = "Moon Stone Brick",
 	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
 	groups = {cracky=3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_node("moonrealm:stoneslab", {
-	description = "Moonstone Slab",
+	description = "Moon Stone Slab",
 	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
 	drawtype = "nodebox",
 	paramtype = "light",
@@ -222,7 +246,7 @@ minetest.register_node("moonrealm:stoneslab", {
 })
 
 minetest.register_node("moonrealm:stonestair", {
-	description = "Moonstone Stair",
+	description = "Moon Stone Stair",
 	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
 	drawtype = "nodebox",
 	paramtype = "light",
@@ -250,16 +274,37 @@ minetest.register_node("moonrealm:stonestair", {
 minetest.register_craftitem("moonrealm:spacesuit", {
 	description = "MR Spacesuit",
 	inventory_image = "moonrealm_spacesuit.png",
-	--groups = {not_in_creative_inventory=1},
+	groups = {not_in_creative_inventory=1},
+})
+
+minetest.register_craftitem("moonrealm:helmet", {
+	description = "MR Mesetint Helmet",
+	inventory_image = "moonrealm_helmet.png",
+	groups = {not_in_creative_inventory=1},
+})
+
+minetest.register_craftitem("moonrealm:lifesupport", {
+	description = "MR Life Support",
+	inventory_image = "moonrealm_lifesupport.png",
+	groups = {not_in_creative_inventory=1},
 })
 
 -- Crafting
 
 minetest.register_craft({
+    output = "moonrealm:airlock",
+    recipe = {
+        {"default:steel_ingot", "", "default:steel_ingot"},
+        {"default:steel_ingot", "default:mese", "default:steel_ingot"},
+        {"default:steel_ingot", "", "default:steel_ingot"},
+    },
+})
+
+minetest.register_craft({
     output = "moonrealm:airgen",
     recipe = {
         {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
-        {"moonrealm:waterice", "", "moonrealm:waterice"},
+        {"moonrealm:waterice", "default:mese", "moonrealm:waterice"},
         {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
     },
 })
@@ -289,23 +334,6 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = "moonrealm:stonestair 4",
-	recipe = {
-		{"moonrealm:stone", ""},
-		{"moonrealm:stone", "moonrealm:stone"},
-	}
-})
-
-minetest.register_craft({
-    output = "moonrealm:airlock",
-    recipe = {
-        {"default:steel_ingot", "", "default:steel_ingot"},
-        {"default:steel_ingot", "", "default:steel_ingot"},
-        {"default:steel_ingot", "", "default:steel_ingot"},
-    },
-})
-
-minetest.register_craft({
     output = "default:furnace",
     recipe = {
         {"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
@@ -321,10 +349,51 @@ minetest.register_craft({
 	}
 })
 
+minetest.register_craft({
+	output = "moonrealm:stonestair 4",
+	recipe = {
+		{"moonrealm:stone", ""},
+		{"moonrealm:stone", "moonrealm:stone"},
+	}
+})
+
+minetest.register_craft({
+	output = "moonrealm:helmet",
+	recipe = {
+		{"default:mese_crystal"},
+		{"default:glass"},
+		{"default:steel_ingot"},
+	}
+})
+
+minetest.register_craft({
+	output = "moonrealm:lifesupport",
+	recipe = {
+		{"default:steel_ingot","default:steel_ingot" , "default:steel_ingot"},
+		{"default:steel_ingot", "", "default:steel_ingot"},
+		{"default:steel_ingot", "default:mese", "default:steel_ingot"},
+	}
+})
+
+minetest.register_craft({
+	output = "moonrealm:spacesuit",
+	recipe = {
+		{"wool:white", "moonrealm:helmet", "wool:white"},
+		{"", "moonrealm:lifesupport", ""},
+		{"wool:white", "", "wool:white"},
+	}
+})
+
 -- Cooking
 
 minetest.register_craft({
 	type = "cooking",
 	output = "moonrealm:glass",
 	recipe = "moonrealm:dust",
+})
+
+minetest.register_craft({
+	type = "fuel",
+	recipe = "default:mese_crystal",
+	burntime = 50,
 })

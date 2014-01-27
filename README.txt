@@ -1,58 +1,52 @@
-moonrealm 0.6.0 by paramat
+moonrealm 0.6.1 by paramat
 For latest stable Minetest and back to 0.4.8
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
 
 Crafting
 --------
-default water source
+Default water source.
 I
-I = waterice
+I = moonrealm waterice
 
-luxnode
-CCC
-CCC
-CCC
-C = luxcrystal
-
-airgen
+Airgen. Place in a sealed habitat away from exterior walls.
 SIS
-ILI
+IMI
 SIS
-S = steel ingot
-I = waterice
-L = luxnode
+S = default steel ingot
+I = moonrealm waterice
+M = default mese block
 
-hlsource
+Hydroponic liquid source.
 LLL
 LIL
 LLL
-L = moonrealm:leaves
-I = waterice
+L = moonrealm leaves
+I = moonrealm waterice
 
-airlock
+Airlock with light source, walk through it, life support air cannot pass through.
 S-S
-SLS
+SMS
 S-S
-S = steel ingot
-L = luxnode
+S = default steel ingot
+M = default mese block
 
-moonstonebrick x 4
+Moon stone brick x 4.
 MM
 MM
-M = moonstone
+M = moon stone
 
-moonstonestair x 4
+Moon stone stair x 4.
 M
 MM
-M = moonstone
+M = moon stone
 
-moonstoneslab x 4
+Moon stone slab x 4.
 MM
-M = moonstone
+M = moon stone
 
-default furnace
+Default furnace, use mese crystal as fuel.
 MMM
 M-M
 MMM
-M = moonstone
+M = moon stone
