@@ -1,11 +1,10 @@
--- moonrealm 0.6.1 by paramat
+-- moonrealm 0.6.2 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
 -- TODO
--- Footprints
--- Smooth terrain
+-- Smooth terrain blended
 -- Craters
 
 -- Parameters
@@ -96,10 +95,44 @@ moonrealm = {}
 dofile(minetest.get_modpath("moonrealm").."/nodes.lua")
 dofile(minetest.get_modpath("moonrealm").."/functions.lua")
 
+-- Player positions
+
+local player_pos = {}
+local player_pos_previous = {}
+minetest.register_on_joinplayer(function(player)
+	player_pos_previous[player:get_player_name()] = {x=0,y=0,z=0}
+end)
+minetest.register_on_leaveplayer(function(player)
+	player_pos_previous[player:get_player_name()] = nil
+end)
+
 -- Globalstep function
 
 minetest.register_globalstep(function(dtime)
 	for _, player in ipairs(minetest.get_connected_players()) do
+		if math.random() < 0.3 and player_pos_previous[player:get_player_name()] ~= nil then -- eternal footprints
+			local pos = player:getpos()
+			player_pos[player:get_player_name()] = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.2),z=math.floor(pos.z+0.5)}
+			local p_ground = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.4),z=math.floor(pos.z+0.5)}
+			local n_ground  = minetest.get_node(p_ground).name
+			local p_groundpl = {x=math.floor(pos.x+0.5),y=math.floor(pos.y-0.5),z=math.floor(pos.z+0.5)}
+			if player_pos[player:get_player_name()].x ~= player_pos_previous[player:get_player_name()].x
+			or player_pos[player:get_player_name()].y < player_pos_previous[player:get_player_name()].y
+			or player_pos[player:get_player_name()].z ~= player_pos_previous[player:get_player_name()].z then
+				if n_ground == "moonrealm:dust" then
+					if math.random() < 0.5 then
+						minetest.add_node(p_groundpl,{name="moonrealm:dustprint1"})
+					else
+						minetest.add_node(p_groundpl,{name="moonrealm:dustprint2"})
+					end
+				end
+			end
+			player_pos_previous[player:get_player_name()] = {
+				x=player_pos[player:get_player_name()].x,
+				y=player_pos[player:get_player_name()].y,
+				z=player_pos[player:get_player_name()].z
+			}
+		end
 		if math.random() < 0.1 then
 			if player:get_inventory():contains_item("main", "moonrealm:spacesuit")
 			and player:get_breath() < 10 then
@@ -116,143 +149,6 @@ minetest.register_globalstep(function(dtime)
 		end
 	end
 end)
-
--- On dignode function, vacuum or air flows into a dug hole from face-connected neighbours only
-
-minetest.register_on_dignode(function(pos, oldnode, digger)
-	local x = pos.x
-	local y = pos.y
-	local z = pos.z
-	for i = -1,1 do
-	for j = -1,1 do
-	for k = -1,1 do
-		if math.abs(i) + math.abs(j) + math.abs(k) == 1 then
-			local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-			if nodename == "moonrealm:vacuum" then -- vacuum has priority to avoid air lweaks
-				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:vacuum"})
-				print ("[moonrealm] Vacuum flows into hole")
-				return
-			elseif nodename == "moonrealm:air" then	
-				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
-				print ("[moonrealm] Air flows into hole")
-				return
-			end
-		end
-	end
-	end
-	end
-end)
-
--- ABMs
-
--- Air spreads into face-connected neighbours
-
-minetest.register_abm({
-	nodenames = {"moonrealm:air"},
-	neighbors = {"moonrealm:vacuum"},
-	interval = 29,
-	chance = 9,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		local x = pos.x
-		local y = pos.y
-		local z = pos.z
-		local nodair = 0
-		local nodvac = 0
-		for i = -1,1 do
-		for j = -1,1 do
-		for k = -1,1 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:air" then
-					nodair = nodair + 1
-				elseif nodename == "moonrealm:vacuum" then
-					nodair = nodvac + 1
-				end
-			end
-		end
-		end
-		end
-		if nodair == 0 or nodvac >= 17 then
-			return
-		end
-		for i = -1,1 do
-		for j = -1,1 do
-		for k = -1,1 do
-			if math.abs(i) + math.abs(j) + math.abs(k) == 1 then -- face connected neighbours
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:vacuum" then
-					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
-					print ("[moonrealm] Air spreads")
-				end
-			end
-		end
-		end
-		end
-	end
-})
-
--- Hydroponics, saturation and drying
-
-minetest.register_abm({
-	nodenames = {"moonrealm:hlsource", "moonrealm:hlflowing"},
-	neighbors = {"moonrealm:dust"},
-	interval = 31,
-	chance = 9,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		local x = pos.x
-		local y = pos.y
-		local z = pos.z
-		for i = -1,1 do
-		for j = -2,0 do -- saturates out and downwards to pos.y - 2, a 3x3 cube.
-		for k = -1,1 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:dust" then
-					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:soil"})
-					print ("[moonrealm] Hydroponic liquid saturates ("..i.." "..j.." "..k..")")
-				end
-			end
-		end
-		end
-		end
-	end
-})
-
-minetest.register_abm({
-	nodenames = {"moonrealm:soil"},
-	interval = 31,
-	chance = 27,
-	action = function(pos, node)
-		local x = pos.x
-		local y = pos.y
-		local z = pos.z
-		for i = -1, 1 do
-		for j = 0, 2 do -- search above for liquid
-		for k = -1, 1 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:hlsource" or nodename == "moonrealm:hlflowing" then
-					return
-				end
-			end
-		end
-		end
-		end
-		minetest.add_node(pos,{name="moonrealm:dust"})
-		print ("[moonrealm] Moon soil dries ("..x.." "..y.." "..z..")")
-	end,
-})
-
--- Space appletree from sapling
-
-minetest.register_abm({
-	nodenames = {"moonrealm:sapling"},
-	interval = 57,
-	chance = 2,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		moonrealm_appletree(pos)
-	end,
-})
 
 -- On generated function
 

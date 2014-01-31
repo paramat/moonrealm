@@ -41,8 +41,28 @@ minetest.register_node("moonrealm:dust", {
 	description = "Moon Dust",
 	tiles = {"moonrealm_dust.png"},
 	groups = {crumbly=3, falling_node=1},
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.1},
+	sounds = default.node_sound_sand_defaults({
+		footstep = {name="default_sand_footstep", gain=0.1},
+	}),
+})
+
+minetest.register_node("moonrealm:dustprint1", {
+	description = "Moon Dust Footprint1",
+	tiles = {"moonrealm_dustprint1.png", "moonrealm_dust.png"},
+	groups = {crumbly=3, falling_node=1},
+	drop = "moonrealm:dust",
+	sounds = default.node_sound_sand_defaults({
+		footstep = {name="default_sand_footstep", gain=0.1},
+	}),
+})
+
+minetest.register_node("moonrealm:dustprint2", {
+	description = "Moon Dust Footprint2",
+	tiles = {"moonrealm_dustprint2.png", "moonrealm_dust.png"},
+	groups = {crumbly=3, falling_node=1},
+	drop = "moonrealm:dust",
+	sounds = default.node_sound_sand_defaults({
+		footstep = {name="default_sand_footstep", gain=0.1},
 	}),
 })
 
@@ -60,15 +80,14 @@ minetest.register_node("moonrealm:vacuum", {
 
 minetest.register_node("moonrealm:air", {
 	description = "Life Support Air",
-	drawtype = "glasslike",
+	--drawtype = "glasslike",
 	tiles = {"moonrealm_air.png"},
-	paramtype = "light",
-	sunlight_propagates = true,
+	--paramtype = "light",
+	--sunlight_propagates = true,
 	walkable = false,
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
-	post_effect_color = {a=16, r=0, g=0, b=16},
 })
 
 minetest.register_node("moonrealm:airgen", {
@@ -77,7 +96,6 @@ minetest.register_node("moonrealm:airgen", {
 	groups = {cracky=3},
 	sounds = default.node_sound_stone_defaults(),
 	on_construct = function(pos)
-		local env = minetest.env
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
@@ -85,9 +103,9 @@ minetest.register_node("moonrealm:airgen", {
 		for j = -1,1 do
 		for k = -1,1 do
 			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = env:get_node({x=x+i,y=y+j,z=z+k}).name
+				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
 				if nodename == "moonrealm:vacuum" then
-					env:add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
+					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
 					print ("[moonrealm] Added air node")
 				end
 			end
