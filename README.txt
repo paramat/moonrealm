@@ -1,4 +1,4 @@
-moonrealm 0.6.2 by paramat
+moonrealm 0.6.3 by paramat
 For latest stable Minetest and back to 0.4.8
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
@@ -29,6 +29,13 @@ S-S
 SMS
 S-S
 S = default steel ingot
+M = default mese block
+
+Light
+GGG
+GMG
+GGG
+G = moonrealm glass
 M = default mese block
 
 Moon stone brick x 4.

@@ -233,6 +233,14 @@ minetest.register_node("moonrealm:leaves", {
 	sounds = default.node_sound_leaves_defaults(),
 })
 
+minetest.register_node("moonrealm:light", {
+	description = "Light",
+	tiles = {"moonrealm_light.png"},
+	light_source = 14,
+	groups = {cracky=3},
+	sounds = default.node_sound_glass_defaults(),
+})
+
 minetest.register_node("moonrealm:stonebrick", {
 	description = "Moon Stone Brick",
 	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
@@ -400,6 +408,15 @@ minetest.register_craft({
 		{"", "moonrealm:lifesupport", ""},
 		{"wool:white", "", "wool:white"},
 	}
+})
+
+minetest.register_craft({
+    output = "moonrealm:light 8",
+    recipe = {
+        {"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
+        {"moonrealm:glass", "default:mese", "moonrealm:glass"},
+        {"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
+    },
 })
 
 -- Cooking

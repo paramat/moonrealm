@@ -1,10 +1,9 @@
--- moonrealm 0.6.2 by paramat
+-- moonrealm 0.6.3 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
 -- TODO
--- Smooth terrain blended
 -- Craters
 
 -- Parameters
@@ -55,6 +54,28 @@ local np_terralt = {
 	persist = 0.67
 }
 
+-- 3D noise for smooth terrain
+
+local np_smooth = {
+	offset = 0,
+	scale = 1,
+	spread = {x=828, y=828, z=828},
+	seed = 113,
+	octaves = 5,
+	persist = 0.4
+}
+
+-- 2D noise for terrain blend
+
+local np_terblen = {
+	offset = 0,
+	scale = 1,
+	spread = {x=2048, y=2048, z=2048},
+	seed = -13002,
+	octaves = 3,
+	persist = 0.5
+}
+
 -- 3D noise for fissures
 
 local np_fissure = {
@@ -73,8 +94,8 @@ local np_gradcen = {
 	scale = 1,
 	spread = {x=1024, y=1024, z=1024},
 	seed = 9344,
-	octaves = 3,
-	persist = 0.6
+	octaves = 5,
+	persist = 0.4
 }
 
 -- 3D noise for faults
@@ -186,14 +207,18 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local sidelen = x1 - x0 + 1
 	local chulens = {x=sidelen, y=sidelen, z=sidelen}
 	local minpos = {x=x0, y=y0, z=z0}
+	local minposd = {x=x0, y=z0}
 	
 	local nvals_terrain = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals_terralt = minetest.get_perlin_map(np_terralt, chulens):get3dMap_flat(minpos)
+	local nvals_smooth = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
+	local nvals_terblen = minetest.get_perlin_map(np_terblen, chulens):get2dMap_flat(minposd)
 	local nvals_fissure = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
 	local nvals_gradcen = minetest.get_perlin_map(np_gradcen, chulens):get3dMap_flat(minpos)
 	local nvals_fault = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
+	local nid = 1 -- 2D noise index
 	local stable = {}
 	for z = z0, z1 do
 		for x = x0, x1 do
@@ -211,6 +236,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				local grad
 				local density
 				local si = x - x0 + 1 -- indexes start from 1
+				local n_terblen = nvals_terblen[nid]
+				local terblen = math.max(math.min(math.abs(n_terblen) * 2, 1.5), 0.5) - 0.5 -- terrain blend with smooth
 				local gradcen = GRADCEN + nvals_gradcen[ni] * CENAMP
 				if y > gradcen then
 					grad = -((y - gradcen) / HIGRAD) ^ HEXP
@@ -218,9 +245,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					grad = ((gradcen - y) / LOGRAD) ^ LEXP
 				end
 				if nvals_fault[ni] >= 0 then
-					density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 + grad
+					density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 * (1 - terblen) + nvals_smooth[ni] * terblen + grad
 				else	
-					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 + grad
+					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 * (1 - terblen) - nvals_smooth[ni] * terblen + grad
 				end
 				
 				if density > 0 then -- if terrain
@@ -268,9 +295,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					stable[si] = false
 				end
 				ni = ni + 1
+				nid = nid + 1
 				vi = vi + 1
 			end
+			nid = nid - 80
 		end
+		nid = nid + 80
 	end
 	
 	vm:set_data(data)
