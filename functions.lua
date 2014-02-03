@@ -4,7 +4,7 @@ function moonrealm_appletree(pos)
 	local x = pos.x
 	local y = pos.y
 	local z = pos.z
-	for j = -3, -1 do
+	for j = -2, -1 do
 		local nodename = minetest.get_node({x=x,y=y+j,z=z}).name
 		if nodename ~= "moonrealm:moonsoil" then
 			return
@@ -12,18 +12,18 @@ function moonrealm_appletree(pos)
 	end
 	for j = 1, 5 do
 		local nodename = minetest.get_node({x=x,y=y+j,z=z}).name
-		if nodename ~= "moonrealm:air" and nodename ~= "air" then
+		if nodename ~= "moonrealm:air" then
 			return
 		end
 	end
-	for j = -3, 4 do
+	for j = -2, 4 do
 		if j >= 1 then
 			for i = -2, 2 do
 			for k = -2, 2 do
 				local nodename = minetest.get_node({x=x+i,y=y+j+1,z=z+k}).name
 				if math.random() > (math.abs(i) + math.abs(k)) / 24
-				and (nodename == "moonrealm:air" or nodename == "air") then
-					if math.random(13) == 2 then
+				and nodename == "moonrealm:air" then
+					if math.random(11) == 2 then
 						minetest.add_node({x=pos.x+i,y=pos.y+j+1,z=pos.z+k},{name="default:apple"})
 					else
 						minetest.add_node({x=pos.x+i,y=pos.y+j+1,z=pos.z+k},{name="moonrealm:leaves"})
@@ -94,7 +94,7 @@ minetest.register_abm({
 		end
 		end
 		end
-		if nodair == 0 or nodvac >= 17 then
+		if nodair == 0 then
 			return
 		end
 		for i = -1,1 do
@@ -125,9 +125,9 @@ minetest.register_abm({
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		for i = -1,1 do
-		for j = -2,0 do -- saturates out and downwards to pos.y - 2, a 3x3 cube.
-		for k = -1,1 do
+		for i = -2,2 do
+		for j = -4,0 do -- saturates out and downwards to pos.y - 4, a 5x5 cube.
+		for k = -2,2 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
 				if nodename == "moonrealm:dust" then
@@ -149,9 +149,9 @@ minetest.register_abm({
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		for i = -1, 1 do
-		for j = 0, 2 do -- search above for liquid
-		for k = -1, 1 do
+		for i = -2, 2 do
+		for j = 0, 4 do -- search above for liquid
+		for k = -2, 2 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
 				if nodename == "moonrealm:hlsource" or nodename == "moonrealm:hlflowing" then

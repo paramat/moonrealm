@@ -178,7 +178,7 @@ minetest.register_node("moonrealm:hlsource", {
 minetest.register_node("moonrealm:soil", {
 	description = "Moonsoil",
 	tiles = {"moonrealm_soil.png"},
-	groups = {crumbly=3, falling_node=1},
+	groups = {crumbly=3, falling_node=1, soil=3},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_dirt_defaults(),
 })
@@ -417,6 +417,14 @@ minetest.register_craft({
         {"moonrealm:glass", "default:mese", "moonrealm:glass"},
         {"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
     },
+})
+
+minetest.register_craft({
+	output = "moonrealm:sapling",
+	recipe = {
+		{"default:mese_crystal"},
+		{"default:sapling"},
+	}
 })
 
 -- Cooking

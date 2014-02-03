@@ -1,10 +1,12 @@
--- moonrealm 0.6.3 by paramat
+-- moonrealm 0.6.4 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
 -- TODO
 -- Craters
+-- Exclusive ores
+-- Air with value to limit spread
 
 -- Parameters
 
@@ -14,23 +16,23 @@ local ZMIN = -33000
 local ZMAX = 33000
 
 local YMIN = 14000 --  -- Approx lower limit
-local GRADCEN = 15000 --  -- Grad centre / terrain centre average level
+local GRADCEN = 15000 --  -- Gradient centre / terrain centre average level
 local YMAX = 16000 --  -- Approx upper limit
 
-local CENAMP = 128 --  -- Grad centre amplitude, terrain centre is varied by this
+local FOOT = true --  -- Footprints in dust
+local CENAMP = 64 --  -- Grad centre amplitude, terrain centre is varied by this
 local HIGRAD = 128 --  -- Surface generating noise gradient above gradcen, controls depth of upper terrain
 local LOGRAD = 128 --  -- Surface generating noise gradient below gradcen, controls depth of lower terrain
 local HEXP = 0.5 --  -- Noise offset exponent above gradcen, 1 = normal 3D perlin terrain
 local LEXP = 2 --  -- Noise offset exponent below gradcen
+local STOT = 0.04 --  -- Stone density threshold, depth of dust
+local ICECHA = 1 / (13*13*13) --  -- Ice chance per dust node at terrain centre, decreases with altitude
+local ICEGRAD = 128 --  -- Ice gradient, vertical distance for no ice
+local ORECHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
 local FISTS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
 local FISEXP = 0.05 --  -- Fissure expansion rate under surface
 
-local STOT = 0.04 --  -- Stone density threshold, depth of dust at terrain centre
-local THIDIS = 192 --  -- Vertical thinning distance for dust
-local ICECHA = 13*13*13 --  -- Ice 1/x chance per dust node
-
-local ORECHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
 -- 3D noise for terrain
 
@@ -61,19 +63,8 @@ local np_smooth = {
 	scale = 1,
 	spread = {x=828, y=828, z=828},
 	seed = 113,
-	octaves = 5,
+	octaves = 4,
 	persist = 0.4
-}
-
--- 2D noise for terrain blend
-
-local np_terblen = {
-	offset = 0,
-	scale = 1,
-	spread = {x=2048, y=2048, z=2048},
-	seed = -13002,
-	octaves = 3,
-	persist = 0.5
 }
 
 -- 3D noise for fissures
@@ -87,16 +78,6 @@ local np_fissure = {
 	persist = 0.5
 }
 
--- 3D noise for gradient centre
-
-local np_gradcen = {
-	offset = 0,
-	scale = 1,
-	spread = {x=1024, y=1024, z=1024},
-	seed = 9344,
-	octaves = 5,
-	persist = 0.4
-}
 
 -- 3D noise for faults
 
@@ -107,6 +88,28 @@ local np_fault = {
 	seed = 14440002,
 	octaves = 4,
 	persist = 0.5
+}
+
+-- 2D noise for terrain centre
+
+local np_gradcen = {
+	offset = 0,
+	scale = 1,
+	spread = {x=1024, y=1024, z=1024},
+	seed = 9344,
+	octaves = 4,
+	persist = 0.4
+}
+
+-- 2D noise for terrain blend
+
+local np_terblen = {
+	offset = 0,
+	scale = 1,
+	spread = {x=2048, y=2048, z=2048},
+	seed = -13002,
+	octaves = 3,
+	persist = 0.4
 }
 
 -- Stuff
@@ -131,7 +134,7 @@ end)
 
 minetest.register_globalstep(function(dtime)
 	for _, player in ipairs(minetest.get_connected_players()) do
-		if math.random() < 0.3 and player_pos_previous[player:get_player_name()] ~= nil then -- eternal footprints
+		if FOOT and math.random() < 0.3 and player_pos_previous[player:get_player_name()] ~= nil then -- eternal footprints
 			local pos = player:getpos()
 			player_pos[player:get_player_name()] = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.2),z=math.floor(pos.z+0.5)}
 			local p_ground = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.4),z=math.floor(pos.z+0.5)}
@@ -212,10 +215,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_terrain = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals_terralt = minetest.get_perlin_map(np_terralt, chulens):get3dMap_flat(minpos)
 	local nvals_smooth = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
-	local nvals_terblen = minetest.get_perlin_map(np_terblen, chulens):get2dMap_flat(minposd)
 	local nvals_fissure = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
-	local nvals_gradcen = minetest.get_perlin_map(np_gradcen, chulens):get3dMap_flat(minpos)
 	local nvals_fault = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
+	
+	local nvals_terblen = minetest.get_perlin_map(np_terblen, chulens):get2dMap_flat(minposd)
+	local nvals_gradcen = minetest.get_perlin_map(np_gradcen, chulens):get2dMap_flat(minposd)
 	
 	local ni = 1
 	local nid = 1 -- 2D noise index
@@ -232,13 +236,13 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		end
 		for y = y0, y1 do
 			local vi = area:index(x0, y, z) -- LVM index for first node in x row
+			local icecha = ICECHA * (1 + (GRADCEN - y) / ICEGRAD)
 			for x = x0, x1 do -- for each node
 				local grad
 				local density
 				local si = x - x0 + 1 -- indexes start from 1
-				local n_terblen = nvals_terblen[nid]
-				local terblen = math.max(math.min(math.abs(n_terblen) * 2, 1.5), 0.5) - 0.5 -- terrain blend with smooth
-				local gradcen = GRADCEN + nvals_gradcen[ni] * CENAMP
+				local terblen = math.max(math.min(math.abs(nvals_terblen[nid]) * 4, 1.5), 0.5) - 0.5 -- terrain blend with smooth
+				local gradcen = GRADCEN + nvals_gradcen[nid] * CENAMP
 				if y > gradcen then
 					grad = -((y - gradcen) / HIGRAD) ^ HEXP
 				else
@@ -249,15 +253,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				else	
 					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 * (1 - terblen) - nvals_smooth[ni] * terblen + grad
 				end
-				
 				if density > 0 then -- if terrain
 					local nofis = false
 					if math.abs(nvals_fissure[ni]) > FISTS + math.sqrt(density) * FISEXP then
 						nofis = true
 					end
-					local stot = math.max((1 - (y - GRADCEN) / THIDIS) * STOT, 0)
-					
-					if density >= stot and nofis then -- stone, ores 
+					if density >= STOT and nofis then -- stone, ores 
 						if math.random(ORECHA) == 2 then
 							local osel = math.random(25)
 							if osel == 25 then
@@ -275,9 +276,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							data[vi] = c_mrstone
 						end
 						stable[si] = true
-					elseif density < stot then -- fine materials
+					elseif density < STOT then -- fine materials
 						if nofis and stable[si] then
-							if math.random(ICECHA) == 2 then
+							if math.random() < icecha then
 								data[vi] = c_waterice
 							else
 								data[vi] = c_dust
