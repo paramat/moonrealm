@@ -1,4 +1,4 @@
--- moonrealm 0.6.4 by paramat
+-- moonrealm 0.6.5 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -6,7 +6,6 @@
 -- TODO
 -- Craters
 -- Exclusive ores
--- Air with value to limit spread
 
 -- Parameters
 

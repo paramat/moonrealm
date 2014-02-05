@@ -80,10 +80,10 @@ minetest.register_node("moonrealm:vacuum", {
 
 minetest.register_node("moonrealm:air", {
 	description = "Life Support Air",
-	--drawtype = "glasslike",
+	drawtype = "glasslike",
 	tiles = {"moonrealm_air.png"},
-	--paramtype = "light",
-	--sunlight_propagates = true,
+	paramtype = "light",
+	sunlight_propagates = true,
 	walkable = false,
 	pointable = false,
 	diggable = false,
@@ -106,7 +106,8 @@ minetest.register_node("moonrealm:airgen", {
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
 				if nodename == "moonrealm:vacuum" then
 					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
-					print ("[moonrealm] Added air node")
+					minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", 16)
+					print ("[moonrealm] Added MR air node")
 				end
 			end
 		end

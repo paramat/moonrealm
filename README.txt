@@ -1,4 +1,4 @@
-moonrealm 0.6.4 by paramat
+moonrealm 0.6.5 by paramat
 For latest stable Minetest and back to 0.4.8
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
@@ -64,9 +64,8 @@ MMM
 M = moon stone
 
 Airgen.
-Place in a completely sealed habitat away from exterior walls.
-Any air leak will spread exponentially, causing an ABM meltdown and ruin the moon realm.
-(i'm working on a fix for this).
+Place in the centre of a sealed habitat.
+Moonrealm air will spread to a distance of roughly 16 nodes.
 SIS
 IMI
 SIS

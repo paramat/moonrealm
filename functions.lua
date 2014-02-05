@@ -6,7 +6,7 @@ function moonrealm_appletree(pos)
 	local z = pos.z
 	for j = -2, -1 do
 		local nodename = minetest.get_node({x=x,y=y+j,z=z}).name
-		if nodename ~= "moonrealm:moonsoil" then
+		if nodename ~= "moonrealm:soil" then
 			return
 		end
 	end
@@ -21,13 +21,15 @@ function moonrealm_appletree(pos)
 			for i = -2, 2 do
 			for k = -2, 2 do
 				local nodename = minetest.get_node({x=x+i,y=y+j+1,z=z+k}).name
-				if math.random() > (math.abs(i) + math.abs(k)) / 24
-				and nodename == "moonrealm:air" then
-					if math.random(11) == 2 then
+				if math.random() > (math.abs(i) + math.abs(k)) / 16 then
+					if math.random(13) == 2 then
 						minetest.add_node({x=pos.x+i,y=pos.y+j+1,z=pos.z+k},{name="default:apple"})
 					else
 						minetest.add_node({x=pos.x+i,y=pos.y+j+1,z=pos.z+k},{name="moonrealm:leaves"})
 					end
+				else
+					minetest.add_node({x=x+i,y=y+j+1,z=z+k},{name="moonrealm:air"})
+					minetest.get_meta({x=x+i,y=y+j+1,z=z+k}):set_int("spread", 16)
 				end
 			end
 			end
@@ -37,7 +39,7 @@ function moonrealm_appletree(pos)
 	print ("[moonrealm] Appletree sapling grows")
 end
 
--- Vacuum or air flows into a dug hole from face-connected neighbours only
+-- Vacuum or air flows into a dug hole
 
 minetest.register_on_dignode(function(pos, oldnode, digger)
 	local x = pos.x
@@ -46,15 +48,19 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	for i = -1,1 do
 	for j = -1,1 do
 	for k = -1,1 do
-		if math.abs(i) + math.abs(j) + math.abs(k) == 1 then
+		if not (i == 0 and j == 0 and k == 0) then
 			local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-			if nodename == "moonrealm:vacuum" then -- vacuum has priority to avoid air lweaks
+			if nodename == "moonrealm:air" then	
+				local spread = minetest.get_meta({x=x+i,y=y+j,z=z+k}):get_int("spread")
+				if spread > 0 then
+					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
+					minetest.get_meta(pos):set_int("spread", (spread - 1))
+					print ("[moonrealm] MR air flows into hole "..(spread - 1))
+					return
+				end
+			elseif nodename == "moonrealm:vacuum" then
 				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:vacuum"})
 				print ("[moonrealm] Vacuum flows into hole")
-				return
-			elseif nodename == "moonrealm:air" then	
-				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
-				print ("[moonrealm] Air flows into hole")
 				return
 			end
 		end
@@ -65,46 +71,31 @@ end)
 
 -- ABMs
 
--- Air spreads into face-connected neighbours
+-- Air spreads
 
-local AIR = false
-if AIR then
 minetest.register_abm({
 	nodenames = {"moonrealm:air"},
-	neighbors = {"moonrealm:vacuum"},
-	interval = 29,
-	chance = 1,
+	neighbors = {"moonrealm:vacuum", "air"},
+	interval = 11,
+	chance = 9,
 	action = function(pos, node, active_object_count, active_object_count_wider)
+		local spread = minetest.get_meta(pos):get_int("spread")
+		if spread <= 0 then
+			return
+		end
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		local nodair = 0
-		local nodvac = 0
 		for i = -1,1 do
 		for j = -1,1 do
 		for k = -1,1 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:air" then
-					nodair = nodair + 1
-				elseif nodename == "moonrealm:vacuum" then
-					nodair = nodvac + 1
-				end
-			end
-		end
-		end
-		end
-		if nodair == 0 then
-			return
-		end
-		for i = -1,1 do
-		for j = -1,1 do
-		for k = -1,1 do
-			if math.abs(i) + math.abs(j) + math.abs(k) == 1 then -- face connected neighbours
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:vacuum" then
+				if nodename == "moonrealm:vacuum"
+				or nodename == "air" then
 					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
-					print ("[moonrealm] Air spreads")
+					minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", (spread - 1))
+					print ("[moonrealm] MR air spreads "..(spread - 1))
 				end
 			end
 		end
@@ -112,14 +103,13 @@ minetest.register_abm({
 		end
 	end
 })
-end
 
--- Hydroponics, saturation and drying
+-- Hydroponic saturation
 
 minetest.register_abm({
 	nodenames = {"moonrealm:hlsource", "moonrealm:hlflowing"},
-	neighbors = {"moonrealm:dust"},
-	interval = 31,
+	neighbors = {"moonrealm:dust", "moonrealm:dustprint1", "moonrealm:dustprint2"},
+	interval = 29,
 	chance = 9,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local x = pos.x
@@ -130,7 +120,9 @@ minetest.register_abm({
 		for k = -2,2 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:dust" then
+				if nodename == "moonrealm:dust"
+				or nodename == "moonrealm:dustprint1"
+				or nodename == "moonrealm:dustprint2" then
 					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:soil"})
 					print ("[moonrealm] Hydroponic liquid saturates")
 				end
@@ -140,6 +132,8 @@ minetest.register_abm({
 		end
 	end
 })
+
+-- Soil drying
 
 minetest.register_abm({
 	nodenames = {"moonrealm:soil"},
@@ -171,7 +165,7 @@ minetest.register_abm({
 minetest.register_abm({
 	nodenames = {"moonrealm:sapling"},
 	interval = 57,
-	chance = 2,
+	chance = 3,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		moonrealm_appletree(pos)
 	end,
