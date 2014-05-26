@@ -1,22 +1,20 @@
--- moonrealm 0.6.5 by paramat
+-- moonrealm 0.6.6 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- TODO
--- Craters
--- Exclusive ores
+-- singlenode mode with spawn chamber
 
 -- Parameters
 
-local XMIN = -33000 --  -- Approx horizontal limits
-local XMAX = 33000
-local ZMIN = -33000
-local ZMAX = 33000
+local XMIN = -8000 --  -- Approx horizontal limits. 1/4 of normal realm size.
+local XMAX = 8000
+local ZMIN = -8000
+local ZMAX = 8000
 
-local YMIN = 14000 --  -- Approx lower limit
-local GRADCEN = 15000 --  -- Gradient centre / terrain centre average level
-local YMAX = 16000 --  -- Approx upper limit
+local YMIN = -8000 --  -- Approx lower limit
+local GRADCEN = 1 --  -- Gradient centre / terrain centre average level
+local YMAX = 8000 --  -- Approx upper limit
 
 local FOOT = true --  -- Footprints in dust
 local CENAMP = 64 --  -- Grad centre amplitude, terrain centre is varied by this
@@ -196,6 +194,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
 	local data = vm:get_data()
 	
+	local c_air = minetest.get_content_id("air")
 	local c_mese = minetest.get_content_id("default:mese")
 	local c_mrironore = minetest.get_content_id("moonrealm:ironore")
 	local c_mrcopperore = minetest.get_content_id("moonrealm:copperore")
@@ -237,6 +236,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			local vi = area:index(x0, y, z) -- LVM index for first node in x row
 			local icecha = ICECHA * (1 + (GRADCEN - y) / ICEGRAD)
 			for x = x0, x1 do -- for each node
+				local nodid = data[vi]
+				local air = nodid == c_air
 				local grad
 				local density
 				local si = x - x0 + 1 -- indexes start from 1
@@ -283,15 +284,21 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								data[vi] = c_dust
 							end
 						else -- fissure
-							data[vi] = c_vacuum
+							if air then
+								data[vi] = c_vacuum
+							end
 							stable[si] = false
 						end
 					else -- fissure or unstable missing node
-						data[vi] = c_vacuum
+						if air then
+							data[vi] = c_vacuum
+						end
 						stable[si] = false
 					end
 				else -- vacuum
-					data[vi] = c_vacuum
+					if air then
+						data[vi] = c_vacuum
+					end
 					stable[si] = false
 				end
 				ni = ni + 1
