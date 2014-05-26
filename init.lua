@@ -1,9 +1,15 @@
--- moonrealm 0.6.6 by paramat
+-- moonrealm 0.7.0 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- singlenode mode with spawn chamber
+-- singlenode mode:
+-- disable clouds
+-- spawn egg with provided spacesuit
+-- non falling dust nodes
+
+-- TODO
+-- LVM sapligs
 
 -- Parameters
 
@@ -249,9 +255,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					grad = ((gradcen - y) / LOGRAD) ^ LEXP
 				end
 				if nvals_fault[ni] >= 0 then
-					density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 * (1 - terblen) + nvals_smooth[ni] * terblen + grad
+					density = (nvals_terrain[ni] + nvals_terralt[ni]) / 2 * (1 - terblen)
+					+ nvals_smooth[ni] * terblen + grad
 				else	
-					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 * (1 - terblen) - nvals_smooth[ni] * terblen + grad
+					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 * (1 - terblen)
+					- nvals_smooth[ni] * terblen + grad
 				end
 				if density > 0 then -- if terrain
 					local nofis = false

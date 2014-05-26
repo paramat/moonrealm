@@ -179,6 +179,14 @@ if SINGLENODE then
 	minetest.register_on_mapgen_init(function(mgparams)
 		minetest.set_mapgen_params({mgname="singlenode", water_level=-33000})
 	end)
+	
+	minetest.register_on_joinplayer(function(player)
+		minetest.setting_set("enable_clouds", "false")
+	end)
+	
+	minetest.register_on_leaveplayer(function(player)
+		minetest.setting_set("enable_clouds", "true")
+	end)
 
 	-- Spawn player
 
@@ -190,7 +198,7 @@ if SINGLENODE then
 		local HEXP = 0.5 --  -- Noise offset exponent above gradcen, 1 = normal 3D perlin terrain
 		local LEXP = 2 --  -- Noise offset exponent below gradcen
 		local STOT = 0.04 --  -- Stone density threshold, depth of dust
-		local PSCA = 4 -- Player scatter from world centre in chunks (80 nodes).
+		local PSCA = 16 -- Player scatter from world centre in chunks (80 nodes).
 		local xsp
 		local ysp
 		local zsp
@@ -289,8 +297,8 @@ if SINGLENODE then
 						end
 						if density >= STOT then
 							stable[si] = true
-						elseif stable[si] and density < 0 then
-							ysp = y + 8
+						elseif stable[si] and density < 0 and terblen == 1 then
+							ysp = y + 4
 							xsp = x
 							zsp = z
 							break
@@ -314,22 +322,31 @@ if SINGLENODE then
 		end
 		print ("[moonrealm] spawn player ("..xsp.." "..ysp.." "..zsp..")")
 		player:setpos({x=xsp, y=ysp, z=zsp})
+		minetest.add_item({x=xsp, y=ysp, z=zsp}, "moonrealm:spacesuit")
 		local vm = minetest.get_voxel_manip()
-		local pos1 = {x=xsp-2, y=ysp-2, z=zsp-2}
-		local pos2 = {x=xsp+2, y=ysp+2, z=zsp+2}
+		local pos1 = {x=xsp-3, y=ysp-3, z=zsp-3}
+		local pos2 = {x=xsp+3, y=ysp+6, z=zsp+3}
 		local emin, emax = vm:read_from_map(pos1, pos2)
 		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
 		local data = vm:get_data()
-		local c_glass = minetest.get_content_id("default:glass")
+		local c_shell = minetest.get_content_id("moonrealm:shell")
 		local c_lsair = minetest.get_content_id("moonrealm:air")
-		for i = -2, 2 do
-		for j = -2, 2 do
-		for k = -2, 2 do
+		for i = -3, 3 do
+		for j = -3, 6 do
+		for k = -3, 3 do
 			local vi = area:index(xsp + i, ysp + j, zsp + k)
-			if i ^ 2 + j ^ 2 + k ^ 2 >= 4 then
-				data[vi] = c_glass
+			local rad
+			if j <= 0 then
+				rad = math.sqrt(i ^ 2 + j ^ 2 + k ^ 2)
 			else
-				data[vi] = c_lsair
+				rad = math.sqrt(i ^ 2 + j ^ 2 * 0.33 + k ^ 2)
+			end
+			if rad <= 3.5 then
+				if rad >= 2 then
+					data[vi] = c_shell
+				else
+					data[vi] = c_lsair
+				end
 			end
 		end
 		end

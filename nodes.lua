@@ -46,9 +46,9 @@ minetest.register_node("moonrealm:dust", {
 	description = "Moon Dust",
 	tiles = {"moonrealm_dust.png"},
 	is_ground_content = false,
-	groups = {crumbly=3, falling_node=1},
+	groups = {crumbly=3},
 	sounds = default.node_sound_sand_defaults({
-		footstep = {name="default_sand_footstep", gain=0.1},
+		footstep = {name="default_sand_footstep", gain=0.05},
 	}),
 })
 
@@ -56,10 +56,10 @@ minetest.register_node("moonrealm:dustprint1", {
 	description = "Moon Dust Footprint1",
 	tiles = {"moonrealm_dustprint1.png", "moonrealm_dust.png"},
 	is_ground_content = false,
-	groups = {crumbly=3, falling_node=1},
+	groups = {crumbly=3},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_sand_defaults({
-		footstep = {name="default_sand_footstep", gain=0.1},
+		footstep = {name="default_sand_footstep", gain=0.05},
 	}),
 })
 
@@ -67,10 +67,10 @@ minetest.register_node("moonrealm:dustprint2", {
 	description = "Moon Dust Footprint2",
 	tiles = {"moonrealm_dustprint2.png", "moonrealm_dust.png"},
 	is_ground_content = false,
-	groups = {crumbly=3, falling_node=1},
+	groups = {crumbly=3},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_sand_defaults({
-		footstep = {name="default_sand_footstep", gain=0.1},
+		footstep = {name="default_sand_footstep", gain=0.05},
 	}),
 })
 
@@ -316,6 +316,15 @@ minetest.register_node("moonrealm:stonestair", {
 			{-0.5, 0, 0, 0.5, 0.5, 0.5},
 		},
 	},
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:shell", {
+	description = "Spawn Shell",
+	tiles = {"moonrealm_shell.png"},
+	light_source = 3,
+	is_ground_content = false,
+	groups = {choppy=2,oddly_breakable_by_hand=1},
 	sounds = default.node_sound_stone_defaults(),
 })
 
