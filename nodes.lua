@@ -322,7 +322,6 @@ minetest.register_node("moonrealm:stonestair", {
 minetest.register_node("moonrealm:shell", {
 	description = "Spawn Shell",
 	tiles = {"moonrealm_shell.png"},
-	light_source = 3,
 	is_ground_content = false,
 	groups = {choppy=2,oddly_breakable_by_hand=1},
 	sounds = default.node_sound_stone_defaults(),

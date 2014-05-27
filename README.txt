@@ -1,10 +1,10 @@
-moonrealm 0.7.0 by paramat
+moonrealm 0.7.1 by paramat
 For latest stable Minetest and back to 0.4.8
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
 
-Preparation crafting
---------------------
+Crafting
+--------
 
 Spacesuit.
 To avoid drowning in the vacuum nodes put a spacesuit in your inventory.
@@ -33,14 +33,12 @@ H = moonrealm helmet
 L = moonrealm lifesupport
 
 
+
 Moonrealm sapling.
 -C-
 -S-
 C = default mese crystal
 S = sapling
-
-Moonrealm crafting
-------------------
 
 Moon stone brick x 4.
 MM

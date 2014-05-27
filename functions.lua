@@ -182,15 +182,18 @@ if SINGLENODE then
 	
 	minetest.register_on_joinplayer(function(player)
 		minetest.setting_set("enable_clouds", "false")
+		minetest.set_timeofday(0.5)
+		minetest.setting_set("time_speed", 0)
 	end)
 	
 	minetest.register_on_leaveplayer(function(player)
 		minetest.setting_set("enable_clouds", "true")
+		minetest.setting_set("time_speed", 72)
 	end)
 
 	-- Spawn player
 
-	function spawnplayer(player)
+	function moonrealm_spawnplayer(player)
 		local GRADCEN = 1 --  -- Gradient centre / terrain centre average level
 		local CENAMP = 64 --  -- Grad centre amplitude, terrain centre is varied by this
 		local HIGRAD = 128 --  -- Surface generating noise gradient above gradcen, controls depth of upper terrain
@@ -322,7 +325,14 @@ if SINGLENODE then
 		end
 		print ("[moonrealm] spawn player ("..xsp.." "..ysp.." "..zsp..")")
 		player:setpos({x=xsp, y=ysp, z=zsp})
-		minetest.add_item({x=xsp, y=ysp, z=zsp}, "moonrealm:spacesuit")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:spacesuit")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:sapling")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airlock 2")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airgen")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:apple 64")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:pick_diamond")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:axe_diamond")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:shovel_diamond")
 		local vm = minetest.get_voxel_manip()
 		local pos1 = {x=xsp-3, y=ysp-3, z=zsp-3}
 		local pos2 = {x=xsp+3, y=ysp+6, z=zsp+3}
@@ -330,6 +340,7 @@ if SINGLENODE then
 		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
 		local data = vm:get_data()
 		local c_shell = minetest.get_content_id("moonrealm:shell")
+		local c_light = minetest.get_content_id("moonrealm:light")
 		local c_lsair = minetest.get_content_id("moonrealm:air")
 		for i = -3, 3 do
 		for j = -3, 6 do
@@ -339,11 +350,13 @@ if SINGLENODE then
 			if j <= 0 then
 				rad = math.sqrt(i ^ 2 + j ^ 2 + k ^ 2)
 			else
-				rad = math.sqrt(i ^ 2 + j ^ 2 * 0.33 + k ^ 2)
+				rad = math.sqrt(i ^ 2 + j ^ 2 * 0.3 + k ^ 2)
 			end
 			if rad <= 3.5 then
-				if rad >= 2 then
+				if rad >= 2.5 then
 					data[vi] = c_shell
+				elseif rad >= 1.5 then
+					data[vi] = c_light
 				else
 					data[vi] = c_lsair
 				end
@@ -357,11 +370,11 @@ if SINGLENODE then
 	end
 
 	minetest.register_on_newplayer(function(player)
-		spawnplayer(player)
+		moonrealm_spawnplayer(player)
 	end)
 
 	minetest.register_on_respawnplayer(function(player)
-		spawnplayer(player)
+		moonrealm_spawnplayer(player)
 		return true
 	end)
 end

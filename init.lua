@@ -1,15 +1,11 @@
--- moonrealm 0.7.0 by paramat
+-- moonrealm 0.7.1 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- singlenode mode:
--- disable clouds
--- spawn egg with provided spacesuit
--- non falling dust nodes
-
--- TODO
--- LVM sapligs
+-- give more stuff at spawn
+-- terrain will not overwrite egg
+-- lights as yolk
 
 -- Parameters
 
@@ -243,7 +239,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			local icecha = ICECHA * (1 + (GRADCEN - y) / ICEGRAD)
 			for x = x0, x1 do -- for each node
 				local nodid = data[vi]
-				local air = nodid == c_air
+				local empty = (nodid == c_air or nodid == c_ignore)
 				local grad
 				local density
 				local si = x - x0 + 1 -- indexes start from 1
@@ -261,7 +257,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					density = (nvals_terrain[ni] - nvals_terralt[ni]) / 2 * (1 - terblen)
 					- nvals_smooth[ni] * terblen + grad
 				end
-				if density > 0 then -- if terrain
+				if density > 0 and empty then -- if terrain and node empty
 					local nofis = false
 					if math.abs(nvals_fissure[ni]) > FISTS + math.sqrt(density) * FISEXP then
 						nofis = true
@@ -292,19 +288,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								data[vi] = c_dust
 							end
 						else -- fissure
-							if air then
-								data[vi] = c_vacuum
-							end
+							data[vi] = c_vacuum
 							stable[si] = false
 						end
 					else -- fissure or unstable missing node
-						if air then
-							data[vi] = c_vacuum
-						end
+						data[vi] = c_vacuum
 						stable[si] = false
 					end
-				else -- vacuum
-					if air then
+				else -- vacuum or spawn egg
+					if empty then
 						data[vi] = c_vacuum
 					end
 					stable[si] = false
