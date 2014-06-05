@@ -184,6 +184,17 @@ if SINGLENODE then
 		minetest.setting_set("enable_clouds", "false")
 		minetest.set_timeofday(0.5)
 		minetest.setting_set("time_speed", 0)
+		minetest.after(0, function()
+			skytextures = {
+				"moonrealm_posy.png",
+				"moonrealm_negy.png",
+				"moonrealm_posz.png",
+				"moonrealm_negz.png",	
+				"moonrealm_negx.png",
+				"moonrealm_posx.png",
+			}
+			player:set_sky({r=0, g=0, b=0, a=0},"skybox", skytextures)
+		end)
 	end)
 	
 	minetest.register_on_leaveplayer(function(player)

@@ -1,11 +1,7 @@
--- moonrealm 0.7.1 by paramat
--- For latest stable Minetest and back to 0.4.8
+-- moonrealm 0.7.2 by paramat
+-- For Minetest 0.4.9 dev with custom skybox commit
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
-
--- give more stuff at spawn
--- terrain will not overwrite egg
--- lights as yolk
 
 -- Parameters
 
@@ -122,9 +118,11 @@ dofile(minetest.get_modpath("moonrealm").."/functions.lua")
 
 local player_pos = {}
 local player_pos_previous = {}
+
 minetest.register_on_joinplayer(function(player)
 	player_pos_previous[player:get_player_name()] = {x=0,y=0,z=0}
 end)
+
 minetest.register_on_leaveplayer(function(player)
 	player_pos_previous[player:get_player_name()] = nil
 end)

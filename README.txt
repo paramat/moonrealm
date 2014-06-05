@@ -1,5 +1,5 @@
-moonrealm 0.7.1 by paramat
-For latest stable Minetest and back to 0.4.8
+moonrealm 0.7.2 by paramat
+For Minetest 0.4.9 dev with custom skybox commit
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
 

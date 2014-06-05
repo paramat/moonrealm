@@ -258,7 +258,7 @@ minetest.register_node("moonrealm:light", {
 	tiles = {"moonrealm_light.png"},
 	light_source = 14,
 	is_ground_content = false,
-	groups = {cracky=3},
+	groups = {cracky=3,oddly_breakable_by_hand=3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -323,7 +323,7 @@ minetest.register_node("moonrealm:shell", {
 	description = "Spawn Shell",
 	tiles = {"moonrealm_shell.png"},
 	is_ground_content = false,
-	groups = {choppy=2,oddly_breakable_by_hand=1},
+	groups = {cracky=3, oddly_breakable_by_hand=1},
 	sounds = default.node_sound_stone_defaults(),
 })
 
