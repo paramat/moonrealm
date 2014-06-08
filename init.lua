@@ -3,6 +3,10 @@
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
+-- improved skybox textures
+-- 204 px width crescent in 1280x1280 posy skybox texture, is 4x width of moon in normal sky
+-- scaling from screenshot to 1280x1280 skybox texture is 14/11
+
 -- Parameters
 
 local XMIN = -8000 --  -- Approx horizontal limits. 1/4 of normal realm size.
@@ -131,7 +135,7 @@ end)
 
 minetest.register_globalstep(function(dtime)
 	for _, player in ipairs(minetest.get_connected_players()) do
-		if FOOT and math.random() < 0.3 and player_pos_previous[player:get_player_name()] ~= nil then -- eternal footprints
+		if FOOT and math.random() < 0.3 and player_pos_previous[player:get_player_name()] ~= nil then -- footprints
 			local pos = player:getpos()
 			player_pos[player:get_player_name()] = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.2),z=math.floor(pos.z+0.5)}
 			local p_ground = {x=math.floor(pos.x+0.5),y=math.floor(pos.y+0.4),z=math.floor(pos.z+0.5)}
@@ -154,18 +158,28 @@ minetest.register_globalstep(function(dtime)
 				z=player_pos[player:get_player_name()].z
 			}
 		end
-		if math.random() < 0.1 then
+		if math.random() < 0.1 then -- spacesuit restores breath
 			if player:get_inventory():contains_item("main", "moonrealm:spacesuit")
 			and player:get_breath() < 10 then
 				player:set_breath(10)
 			end
 		end
-		if math.random() > 0.99 then
+		if math.random() > 0.99 then -- set gravity and skybox when entering/leaving moonrealm
 			local pos = player:getpos()
 			if pos.y > YMIN and pos.y < YMAX then
-				player:set_physics_override(1, 0.6, 0.2)
+				player:set_physics_override(1, 0.6, 0.2) -- speed, jump, gravity
+				--skytextures = {
+				--	"moonrealm_posy.png",
+				--	"moonrealm_negy.png",
+				--	"moonrealm_posz.png",
+				--	"moonrealm_negz.png",	
+				--	"moonrealm_negx.png",
+				--	"moonrealm_posx.png",
+				--}
+				--player:set_sky({r=0, g=0, b=0, a=0}, "skybox", skytextures)
 			else
-				player:set_physics_override(1, 1, 1) -- speed, jump, gravity
+				player:set_physics_override(1, 1, 1)
+				--player:set_sky({}, "regular", {}) -- changing back to this segfaults
 			end
 		end
 	end
