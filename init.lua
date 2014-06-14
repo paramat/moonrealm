@@ -1,11 +1,10 @@
--- moonrealm 0.7.2 by paramat
+-- moonrealm 0.8.0 by paramat
 -- For Minetest 0.4.9 dev with custom skybox commit
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- improved skybox textures
--- 204 px width crescent in 1280x1280 posy skybox texture, is 4x width of moon in normal sky
--- scaling from screenshot to 1280x1280 skybox texture is 14/11
+-- auto-set skybox and 'override day/night ratio' in singlenode and stacked realm modes
+-- constant fissure width
 
 -- Parameters
 
@@ -14,9 +13,9 @@ local XMAX = 8000
 local ZMIN = -8000
 local ZMAX = 8000
 
-local YMIN = -8000 --  -- Approx lower limit
-local GRADCEN = 1 --  -- Gradient centre / terrain centre average level
-local YMAX = 8000 --  -- Approx upper limit
+local YMIN = 8000 --  -- Approx lower limit
+local GRADCEN = 16000 --  -- Gradient centre / terrain centre average level
+local YMAX = 24000 --  -- Approx upper limit
 
 local FOOT = true --  -- Footprints in dust
 local CENAMP = 64 --  -- Grad centre amplitude, terrain centre is varied by this
@@ -29,8 +28,7 @@ local ICECHA = 1 / (13*13*13) --  -- Ice chance per dust node at terrain centre,
 local ICEGRAD = 128 --  -- Ice gradient, vertical distance for no ice
 local ORECHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
-local FISTS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
-local FISEXP = 0.05 --  -- Fissure expansion rate under surface
+local TFIS = 0.01 --  -- Fissure threshold. Controls size of fissures
 
 
 -- 3D noise for terrain
@@ -164,22 +162,24 @@ minetest.register_globalstep(function(dtime)
 				player:set_breath(10)
 			end
 		end
-		if math.random() > 0.99 then -- set gravity and skybox when entering/leaving moonrealm
+		if math.random() > 0.99 then -- set gravity, skybox and override time when entering/leaving moonrealm
 			local pos = player:getpos()
-			if pos.y > YMIN and pos.y < YMAX then
+			if pos.y > YMIN and pos.y < YMAX then -- entering realm
 				player:set_physics_override(1, 0.6, 0.2) -- speed, jump, gravity
-				--skytextures = {
-				--	"moonrealm_posy.png",
-				--	"moonrealm_negy.png",
-				--	"moonrealm_posz.png",
-				--	"moonrealm_negz.png",	
-				--	"moonrealm_negx.png",
-				--	"moonrealm_posx.png",
-				--}
-				--player:set_sky({r=0, g=0, b=0, a=0}, "skybox", skytextures)
-			else
+				skytextures = {
+					"moonrealm_posy.png",
+					"moonrealm_negy.png",
+					"moonrealm_posz.png",
+					"moonrealm_negz.png",	
+					"moonrealm_negx.png",
+					"moonrealm_posx.png",
+				}
+				player:set_sky({r=0, g=0, b=0, a=0}, "skybox", skytextures)
+				player:override_day_night_ratio(1)
+			else -- on leaving realm
 				player:set_physics_override(1, 1, 1)
-				--player:set_sky({}, "regular", {}) -- changing back to this segfaults
+				player:set_sky({}, "regular", {})
+				player:override_day_night_ratio(nil)
 			end
 		end
 	end
@@ -271,7 +271,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				end
 				if density > 0 and empty then -- if terrain and node empty
 					local nofis = false
-					if math.abs(nvals_fissure[ni]) > FISTS + math.sqrt(density) * FISEXP then
+					if math.abs(nvals_fissure[ni]) > TFIS then
 						nofis = true
 					end
 					if density >= STOT and nofis then -- stone, ores 

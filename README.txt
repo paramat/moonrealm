@@ -1,4 +1,4 @@
-moonrealm 0.7.2 by paramat
+moonrealm 0.8.0 by paramat
 For Minetest 0.4.9 dev with custom skybox commit
 Depends default
 Licenses: code WTFPL, textures CC BY-SA
@@ -9,7 +9,7 @@ Crafting
 Spacesuit.
 To avoid drowning in the vacuum nodes put a spacesuit in your inventory.
 
-Mesetint helmet.
+Mesetinted helmet.
 -C-
 -G-
 -S-

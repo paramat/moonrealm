@@ -173,7 +173,7 @@ minetest.register_abm({
 
 -- Singlenode option
 
-local SINGLENODE = true
+local SINGLENODE = false
 
 if SINGLENODE then
 	minetest.register_on_mapgen_init(function(mgparams)
@@ -182,8 +182,6 @@ if SINGLENODE then
 	
 	minetest.register_on_joinplayer(function(player)
 		minetest.setting_set("enable_clouds", "false")
-		minetest.set_timeofday(0.5)
-		minetest.setting_set("time_speed", 0)
 		minetest.after(0, function()
 			skytextures = {
 				"moonrealm_posy.png",
@@ -195,11 +193,11 @@ if SINGLENODE then
 			}
 			player:set_sky({r=0, g=0, b=0, a=0},"skybox", skytextures)
 		end)
+		player:override_day_night_ratio(1)
 	end)
 	
 	minetest.register_on_leaveplayer(function(player)
 		minetest.setting_set("enable_clouds", "true")
-		minetest.setting_set("time_speed", 72)
 	end)
 
 	-- Spawn player
@@ -337,9 +335,10 @@ if SINGLENODE then
 		print ("[moonrealm] spawn player ("..xsp.." "..ysp.." "..zsp..")")
 		player:setpos({x=xsp, y=ysp, z=zsp})
 		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:spacesuit")
-		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:sapling")
-		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airlock 2")
-		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airgen")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:sapling 4")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airlock 4")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airgen 4")
+		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:hlsource 4")
 		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:apple 64")
 		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:pick_diamond")
 		minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:axe_diamond")
