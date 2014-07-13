@@ -235,8 +235,8 @@ minetest.register_node("moonrealm:sapling", {
 	sounds = default.node_sound_defaults(),
 })
 
-minetest.register_node("moonrealm:leaves", {
-	description = "MR Leaves",
+minetest.register_node("moonrealm:appleleaf", {
+	description = "Appletree leaves",
 	drawtype = "allfaces_optional",
 	visual_scale = 1.3,
 	tiles = {"default_leaves.png"},
@@ -247,7 +247,7 @@ minetest.register_node("moonrealm:leaves", {
 		max_items = 1,
 		items = {
 			{items = {"moonrealm:sapling"},rarity = 20,},
-			{items = {"moonrealm:leaves"},}
+			{items = {"moonrealm:appleleaf"},}
 		}
 	},
 	sounds = default.node_sound_leaves_defaults(),

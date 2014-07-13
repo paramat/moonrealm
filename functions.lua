@@ -4,38 +4,69 @@ function moonrealm_appletree(pos)
 	local x = pos.x
 	local y = pos.y
 	local z = pos.z
-	for j = -2, -1 do
-		local nodename = minetest.get_node({x=x,y=y+j,z=z}).name
-		if nodename ~= "moonrealm:soil" then
+	local top = 3 + math.random(2)
+	local c_tree = minetest.get_content_id("default:tree")
+	local c_apple = minetest.get_content_id("default:apple")
+	local c_appleleaf = minetest.get_content_id("moonrealm:appleleaf")
+	local c_soil = minetest.get_content_id("moonrealm:soil")
+	local c_lsair = minetest.get_content_id("moonrealm:air")
+
+	local vm = minetest.get_voxel_manip()
+	local pos1 = {x=x-2, y=y-2, z=z-2}
+	local pos2 = {x=x+2, y=y+5, z=z+2}
+	local emin, emax = vm:read_from_map(pos1, pos2)
+	local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	local data = vm:get_data()
+
+	for j = -2, -1 do -- check for soil
+		local vi = area:index(x, y + j, z)
+		if data[vi] ~= c_soil then
 			return
 		end
 	end
-	for j = 1, 5 do
-		local nodename = minetest.get_node({x=x,y=y+j,z=z}).name
-		if nodename ~= "moonrealm:air" then
+	for j = 1, 5 do -- check for life support air
+	for i = -2, 2 do
+	for k = -2, 2 do
+		local vi = area:index(x + i, y + j, z + k)
+		if data[vi] ~= c_lsair then
 			return
 		end
 	end
-	for j = -2, 4 do
-		if j >= 1 then
+	end
+	end
+	for j = -2, top do -- spawn appletree
+		if j == top - 1 or j == top then
 			for i = -2, 2 do
 			for k = -2, 2 do
-				local nodename = minetest.get_node({x=x+i,y=y+j+1,z=z+k}).name
-				if math.random() > (math.abs(i) + math.abs(k)) / 16 then
-					if math.random(13) == 2 then
-						minetest.add_node({x=pos.x+i,y=pos.y+j+1,z=pos.z+k},{name="default:apple"})
-					else
-						minetest.add_node({x=pos.x+i,y=pos.y+j+1,z=pos.z+k},{name="moonrealm:leaves"})
+				local vi = area:index(x + i, y + j, z + k)
+				if math.random(5) ~= 2 then
+					data[vi] = c_appleleaf
+					if j == top and math.random() < 0.04 then -- apples hang from leaves
+						local viu = area:index(x + i, y + j - 1, z + k)
+						data[viu] = c_apple
 					end
-				else
-					minetest.add_node({x=x+i,y=y+j+1,z=z+k},{name="moonrealm:air"})
-					minetest.get_meta({x=x+i,y=y+j+1,z=z+k}):set_int("spread", 16)
 				end
 			end
 			end
+		elseif j == top - 2 then
+			for i = -1, 1 do
+			for k = -1, 1 do
+				if math.abs(i) + math.abs(k) == 2 then
+					local vi = area:index(x + i, y + j, z + k)
+					data[vi] = c_tree
+				end
+			end
+			end
+		else
+			local vi = area:index(x, y + j, z)
+			data[vi] = c_tree
 		end
-		minetest.add_node({x=pos.x,y=pos.y+j,z=pos.z},{name="default:tree"})
 	end
+	
+	vm:set_data(data)
+	vm:write_to_map()
+	vm:update_map()
+
 	print ("[moonrealm] Appletree sapling grows")
 end
 
@@ -164,8 +195,8 @@ minetest.register_abm({
 
 minetest.register_abm({
 	nodenames = {"moonrealm:sapling"},
-	interval = 57,
-	chance = 3,
+	interval = 31,
+	chance = 5,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		moonrealm_appletree(pos)
 	end,
@@ -173,7 +204,7 @@ minetest.register_abm({
 
 -- Singlenode option
 
-local SINGLENODE = false
+local SINGLENODE = true
 
 if SINGLENODE then
 	minetest.register_on_mapgen_init(function(mgparams)

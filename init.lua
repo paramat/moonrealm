@@ -1,34 +1,35 @@
--- moonrealm 0.8.0 by paramat
--- For Minetest 0.4.9 dev with custom skybox commit
+-- moonrealm 0.8.1 by paramat
+-- For Minetest 0.4.10
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- auto-set skybox and 'override day/night ratio' in singlenode and stacked realm modes
--- constant fissure width
+-- speed increase by using voxelmanip for scanning chunk below / initialising stability table
+-- LVM appletree, new design, spawn with LVM
+-- TODO
+-- on-dignode, air, hydroponics, soil drying by LVM too
 
 -- Parameters
 
-local XMIN = -8000 --  -- Approx horizontal limits. 1/4 of normal realm size.
+local XMIN = -8000 -- Approx horizontal limits. 1/4 of normal realm size.
 local XMAX = 8000
 local ZMIN = -8000
 local ZMAX = 8000
+		-- Change the 3 parameters below when changing between singlenode and stacked modes
+local YMIN = -8000 -- Approx lower limit
+local GRADCEN = 1 -- Gradient centre / terrain centre average level
+local YMAX = 8000 -- Approx upper limit
 
-local YMIN = 8000 --  -- Approx lower limit
-local GRADCEN = 16000 --  -- Gradient centre / terrain centre average level
-local YMAX = 24000 --  -- Approx upper limit
-
-local FOOT = true --  -- Footprints in dust
-local CENAMP = 64 --  -- Grad centre amplitude, terrain centre is varied by this
-local HIGRAD = 128 --  -- Surface generating noise gradient above gradcen, controls depth of upper terrain
-local LOGRAD = 128 --  -- Surface generating noise gradient below gradcen, controls depth of lower terrain
-local HEXP = 0.5 --  -- Noise offset exponent above gradcen, 1 = normal 3D perlin terrain
-local LEXP = 2 --  -- Noise offset exponent below gradcen
-local STOT = 0.04 --  -- Stone density threshold, depth of dust
-local ICECHA = 1 / (13*13*13) --  -- Ice chance per dust node at terrain centre, decreases with altitude
-local ICEGRAD = 128 --  -- Ice gradient, vertical distance for no ice
-local ORECHA = 7*7*7 --  -- Ore 1/x chance per stone node
-
-local TFIS = 0.01 --  -- Fissure threshold. Controls size of fissures
+local FOOT = true -- Footprints in dust
+local CENAMP = 64 -- Grad centre amplitude, terrain centre is varied by this
+local HIGRAD = 128 -- Surface generating noise gradient above gradcen, controls depth of upper terrain
+local LOGRAD = 128 -- Surface generating noise gradient below gradcen, controls depth of lower terrain
+local HEXP = 0.5 -- Noise offset exponent above gradcen, 1 = normal 3D perlin terrain
+local LEXP = 2 -- Noise offset exponent below gradcen
+local STOT = 0.04 -- Stone density threshold, depth of dust
+local ICECHA = 1 / (13*13*13) -- Ice chance per dust node at terrain centre, decreases with altitude
+local ICEGRAD = 128 -- Ice gradient, vertical distance for no ice
+local ORECHA = 7*7*7 -- Ore 1/x chance per stone node
+local TFIS = 0.01 -- Fissure threshold. Controls size of fissures
 
 
 -- 3D noise for terrain
@@ -237,14 +238,16 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nid = 1 -- 2D noise index
 	local stable = {}
 	for z = z0, z1 do
+		local viu = area:index(x0, y0-1, z)
 		for x = x0, x1 do
 			local si = x - x0 + 1
-			local nodename = minetest.get_node({x=x,y=y0-1,z=z}).name
-			if nodename == "moonrealm:vacuum" then
+			local nodid = data[viu]
+			if nodid == c_vacuum then
 				stable[si] = false
 			else -- solid nodes and ignore in ungenerated chunks
 				stable[si] = true
 			end
+			viu = viu + 1
 		end
 		for y = y0, y1 do
 			local vi = area:index(x0, y, z) -- LVM index for first node in x row
