@@ -3,8 +3,6 @@
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- speed increase by using voxelmanip for scanning chunk below / initialising stability table
--- LVM appletree, new design, spawn with LVM
 -- TODO
 -- on-dignode, air, hydroponics, soil drying by LVM too
 

@@ -76,28 +76,45 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	local x = pos.x
 	local y = pos.y
 	local z = pos.z
-	for i = -1,1 do
+	local c_lsair = minetest.get_content_id("moonrealm:air")
+	local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
+
+	local vm = minetest.get_voxel_manip()
+	local pos1 = {x=x-1, y=y-1, z=z-1}
+	local pos2 = {x=x+1, y=y+1, z=z+1}
+	local emin, emax = vm:read_from_map(pos1, pos2)
+	local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	local data = vm:get_data()
+
+	local vic = area:index(x, y, z)
 	for j = -1,1 do
 	for k = -1,1 do
-		if not (i == 0 and j == 0 and k == 0) then
-			local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-			if nodename == "moonrealm:air" then	
-				local spread = minetest.get_meta({x=x+i,y=y+j,z=z+k}):get_int("spread")
-				if spread > 0 then
-					minetest.add_node({x=x,y=y,z=z},{name="moonrealm:air"})
-					minetest.get_meta(pos):set_int("spread", (spread - 1))
-					print ("[moonrealm] MR air flows into hole "..(spread - 1))
-					return
+		local vi = area:index(x-1, y+j, z+k)
+		for i = -1,1 do
+			if not (i == 0 and j == 0 and k == 0) then
+				local nodid = data[vi]
+				if nodid == c_lsair then	
+					local spread = minetest.get_meta({x=x+i,y=y+j,z=z+k}):get_int("spread")
+					if spread > 0 then
+						data[vic] = c_lsair
+						minetest.get_meta(pos):set_int("spread", (spread - 1))
+						vm:set_data(data)
+						vm:write_to_map()			
+						vm:update_map()
+						print ("[moonrealm] MR air flows into hole")
+						return
+					end
 				end
-			elseif nodename == "moonrealm:vacuum" then
-				minetest.add_node({x=x,y=y,z=z},{name="moonrealm:vacuum"})
-				print ("[moonrealm] Vacuum flows into hole")
-				return
 			end
+			vi = vi + 1
 		end
 	end
 	end
-	end
+	data[vic] = c_vacuum
+	vm:set_data(data)
+	vm:write_to_map()
+	vm:update_map()
+	print ("[moonrealm] Vacuum flows into hole")
 end)
 
 -- ABMs
@@ -106,39 +123,55 @@ end)
 
 minetest.register_abm({
 	nodenames = {"moonrealm:air"},
-	neighbors = {"moonrealm:vacuum", "air"},
-	interval = 11,
+	neighbors = {"moonrealm:vacuum"},
+	interval = 13,
 	chance = 9,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local spread = minetest.get_meta(pos):get_int("spread")
 		if spread <= 0 then
 			return
 		end
+
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		for i = -1,1 do
+		local c_lsair = minetest.get_content_id("moonrealm:air")
+		local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
+	
+		local vm = minetest.get_voxel_manip()
+		local pos1 = {x=x-1, y=y-1, z=z-1}
+		local pos2 = {x=x+1, y=y+1, z=z+1}
+		local emin, emax = vm:read_from_map(pos1, pos2)
+		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+		local data = vm:get_data()
+
 		for j = -1,1 do
 		for k = -1,1 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:vacuum"
-				or nodename == "air" then
-					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
-					minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", (spread - 1))
-					print ("[moonrealm] MR air spreads "..(spread - 1))
+			local vi = area:index(x-1, y+j, z+k)
+			for i = -1,1 do
+				if not (i == 0 and j == 0 and k == 0) then
+					local nodid = data[vi]
+					if nodid == c_vacuum then
+						data[vi] = c_lsair
+						minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", (spread - 1))
+						print ("[moonrealm] MR air spreads")
+					end
 				end
+				vi = vi + 1
 			end
 		end
 		end
-		end
+
+		vm:set_data(data)
+		vm:write_to_map()
+		vm:update_map()
 	end
 })
 
 -- Hydroponic saturation
 
 minetest.register_abm({
-	nodenames = {"moonrealm:hlsource", "moonrealm:hlflowing"},
+	nodenames = {"moonrealm:hlsource"},
 	neighbors = {"moonrealm:dust", "moonrealm:dustprint1", "moonrealm:dustprint2"},
 	interval = 29,
 	chance = 9,
@@ -146,21 +179,40 @@ minetest.register_abm({
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		for i = -2,2 do
-		for j = -4,0 do -- saturates out and downwards to pos.y - 4, a 5x5 cube.
+
+		local c_dust = minetest.get_content_id("moonrealm:dust")
+		local c_dustp1 = minetest.get_content_id("moonrealm:dustprint1")
+		local c_dustp2 = minetest.get_content_id("moonrealm:dustprint2")
+		local c_soil = minetest.get_content_id("moonrealm:soil")
+	
+		local vm = minetest.get_voxel_manip()
+		local pos1 = {x=x-2, y=y-4, z=z-2}
+		local pos2 = {x=x+2, y=y, z=z+2}
+		local emin, emax = vm:read_from_map(pos1, pos2)
+		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+		local data = vm:get_data()
+
+		for j = -4,0 do
 		for k = -2,2 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:dust"
-				or nodename == "moonrealm:dustprint1"
-				or nodename == "moonrealm:dustprint2" then
-					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:soil"})
-					print ("[moonrealm] Hydroponic liquid saturates")
+			local vi = area:index(x-2, y+j, z+k)
+			for i = -2,2 do
+				if not (i == 0 and j == 0 and k == 0) then
+					local nodid = data[vi]
+					if nodid == c_dust
+					or nodid == c_dustp1
+					or nodid == c_dustp2 then
+						data[vi] = c_soil
+						print ("[moonrealm] Hydroponic liquid saturates")
+					end
 				end
+				vi = vi + 1
 			end
 		end
 		end
-		end
+
+		vm:set_data(data)
+		vm:write_to_map()
+		vm:update_map()
 	end
 })
 
@@ -169,24 +221,42 @@ minetest.register_abm({
 minetest.register_abm({
 	nodenames = {"moonrealm:soil"},
 	interval = 31,
-	chance = 27,
+	chance = 9,
 	action = function(pos, node)
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		for i = -2, 2 do
-		for j = 0, 4 do -- search above for liquid
+		local c_dust = minetest.get_content_id("moonrealm:dust")
+		local c_hlsource = minetest.get_content_id("moonrealm:hlsource")
+	
+		local vm = minetest.get_voxel_manip()
+		local pos1 = {x=x-2, y=y, z=z-2}
+		local pos2 = {x=x+2, y=y+4, z=z+2}
+		local emin, emax = vm:read_from_map(pos1, pos2)
+		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+		local data = vm:get_data()
+
+		local vic = area:index(x, y, z)
+		for j = 0, 4 do
 		for k = -2, 2 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
-				if nodename == "moonrealm:hlsource" or nodename == "moonrealm:hlflowing" then
-					return
+			local vi = area:index(x-2, y+j, z+k)
+			for i = -2, 2 do
+				if not (i == 0 and j == 0 and k == 0) then
+					local nodid = data[vi]
+					if nodid == c_hlsource then
+						return
+					end
 				end
+				vi = vi + 1
 			end
 		end
 		end
-		end
-		minetest.add_node(pos,{name="moonrealm:dust"})
+		data[vic] = c_dust
+
+		vm:set_data(data)
+		vm:write_to_map()
+		vm:update_map()
+
 		print ("[moonrealm] Moon soil dries")
 	end,
 })
