@@ -7,7 +7,7 @@ minetest.register_node("moonrealm:stone", {
 })
 
 minetest.register_node("moonrealm:ironore", {
-	description = "MR Iron Ore",
+	description = "Iron Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_iron.png"},
 	is_ground_content = false,
 	groups = {cracky=2},
@@ -16,7 +16,7 @@ minetest.register_node("moonrealm:ironore", {
 })
 
 minetest.register_node("moonrealm:copperore", {
-	description = "MR Copper Ore",
+	description = "Copper Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_copper.png"},
 	is_ground_content = false,
 	groups = {cracky=2},
@@ -25,7 +25,7 @@ minetest.register_node("moonrealm:copperore", {
 })
 
 minetest.register_node("moonrealm:goldore", {
-	description = "MR Gold Ore",
+	description = "Gold Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_gold.png"},
 	is_ground_content = false,
 	groups = {cracky=2},
@@ -34,11 +34,22 @@ minetest.register_node("moonrealm:goldore", {
 })
 
 minetest.register_node("moonrealm:diamondore", {
-	description = "MR Diamond Ore",
+	description = "Diamond Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_diamond.png"},
 	is_ground_content = false,
 	groups = {cracky=1},
 	drop = "default:diamond",
+	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:mese", {
+	description = "Mese Block",
+	tiles = {"moonrealm_mese.png"},
+	paramtype = "light",
+	light_source = 3,
+	is_ground_content = false,
+	groups = {cracky=1, level=2},
+	drop = "default:mese",
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -135,7 +146,7 @@ minetest.register_node("moonrealm:waterice", {
 	paramtype = "light",
 	is_ground_content = false,
 	sunlight_propagates = true,
-	groups = {cracky=3,melts=1},
+	groups = {cracky=3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -194,7 +205,7 @@ minetest.register_node("moonrealm:soil", {
 	description = "Moonsoil",
 	tiles = {"moonrealm_soil.png"},
 	is_ground_content = false,
-	groups = {crumbly=3, falling_node=1, soil=3},
+	groups = {crumbly=3},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_dirt_defaults(),
 })
@@ -202,6 +213,7 @@ minetest.register_node("moonrealm:soil", {
 minetest.register_node("moonrealm:airlock", {
 	description = "Airlock",
 	tiles = {"moonrealm_airlock.png"},
+	paramtype = "light",
 	light_source = 14,
 	is_ground_content = false,
 	walkable = false,
@@ -211,18 +223,18 @@ minetest.register_node("moonrealm:airlock", {
 })
 
 minetest.register_node("moonrealm:glass", {
-	description = "MR Glass",
+	description = "Glass",
 	drawtype = "glasslike",
 	tiles = {"default_obsidian_glass.png"},
 	paramtype = "light",
 	is_ground_content = false,
 	sunlight_propagates = true,
-	groups = {cracky=3,oddly_breakable_by_hand=3},
+	groups = {cracky=3, oddly_breakable_by_hand=3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
 minetest.register_node("moonrealm:sapling", {
-	description = "MR Sapling",
+	description = "Sapling",
 	drawtype = "plantlike",
 	visual_scale = 1.0,
 	tiles = {"default_sapling.png"},
@@ -231,7 +243,7 @@ minetest.register_node("moonrealm:sapling", {
 	paramtype = "light",
 	is_ground_content = false,
 	walkable = false,
-	groups = {snappy=2,dig_immediate=3,flammable=2},
+	groups = {snappy=2, dig_immediate=3, flammable=2},
 	sounds = default.node_sound_defaults(),
 })
 
@@ -256,9 +268,10 @@ minetest.register_node("moonrealm:appleleaf", {
 minetest.register_node("moonrealm:light", {
 	description = "Light",
 	tiles = {"moonrealm_light.png"},
+	paramtype = "light",
 	light_source = 14,
 	is_ground_content = false,
-	groups = {cracky=3,oddly_breakable_by_hand=3},
+	groups = {cracky=3, oddly_breakable_by_hand=3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -324,25 +337,26 @@ minetest.register_node("moonrealm:shell", {
 	tiles = {"moonrealm_shell.png"},
 	is_ground_content = false,
 	groups = {cracky=3, oddly_breakable_by_hand=1},
+	drop = "",
 	sounds = default.node_sound_stone_defaults(),
 })
 
 -- Items
 
 minetest.register_craftitem("moonrealm:spacesuit", {
-	description = "MR Spacesuit",
+	description = "Spacesuit",
 	inventory_image = "moonrealm_spacesuit.png",
 	groups = {not_in_creative_inventory=1},
 })
 
 minetest.register_craftitem("moonrealm:helmet", {
-	description = "MR Mesetint Helmet",
+	description = "Mesetint Helmet",
 	inventory_image = "moonrealm_helmet.png",
 	groups = {not_in_creative_inventory=1},
 })
 
 minetest.register_craftitem("moonrealm:lifesupport", {
-	description = "MR Life Support",
+	description = "Life Support",
 	inventory_image = "moonrealm_lifesupport.png",
 	groups = {not_in_creative_inventory=1},
 })
@@ -472,3 +486,4 @@ minetest.register_craft({
 	recipe = "default:mese_crystal",
 	burntime = 50,
 })
+

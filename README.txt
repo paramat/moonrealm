@@ -1,7 +1,21 @@
-moonrealm 0.8.1 by paramat
-For Minetest 0.4.10
+moonrealm 0.8.2 by paramat
+For Minetest 0.4.12 or later
 Depends default
-Licenses: code WTFPL, textures CC BY-SA
+Licenses: Code LGPL 2.1. Media CC BY-SA
+
+
+Version changes:
+
+Shell drops nothing
+Simpler appletree with vi = vi + 1 optimisation, more apples
+New licences
+paramtype = "light" for light sources
+No longer override day night ratio on joinplayer to avoid darkness
+Set SPAWNEGG in functions.lua to enable spawnegg spawning in moonrealm
+Moonrealm mese glows and drops default:mese
+Shorten lines, cleanup code, fix undeclared globals
+Noise objects created only once
+
 
 Crafting
 --------
@@ -100,3 +114,4 @@ LIL
 LLL
 L = moonrealm leaves
 I = moonrealm waterice
+
