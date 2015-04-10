@@ -2,7 +2,7 @@
 
 local SINGLENODE = true -- Set to true if using singlenode mapgen
 local YMIN = -8000 -- Approx lower limit
-local GRADCEN = 0 -- Gradient centre / terrain centre average level
+local GRADCEN = 1 -- Gradient centre / terrain centre average level
 local YMAX = 8000 -- Approx upper limit
 local XMIN = -8000 -- Approx horizontal limits
 local XMAX = 8000
