@@ -121,14 +121,14 @@ minetest.register_node("moonrealm:airgen", {
 		local x = pos.x
 		local y = pos.y
 		local z = pos.z
-		for i = -1,1 do
-		for j = -1,1 do
-		for k = -1,1 do
+		for i = -1, 1 do
+		for j = -1, 1 do
+		for k = -1, 1 do
 			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x=x+i,y=y+j,z=z+k}).name
+				local nodename = minetest.get_node({x = x + i, y = y + j, z = z + k}).name
 				if nodename == "moonrealm:vacuum" then
-					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
-					minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", 16)
+					minetest.add_node({x = x + i, y = y + j, z = z + k},{name="moonrealm:air"})
+					minetest.get_meta({x = x + i, y = y + j, z = z + k}):set_int("spread", 16)
 					print ("[moonrealm] Added moonrealm air node")
 				end
 			end
@@ -258,7 +258,7 @@ minetest.register_node("moonrealm:appleleaf", {
 	drop = {
 		max_items = 1,
 		items = {
-			{items = {"moonrealm:sapling"},rarity = 20,},
+			{items = {"moonrealm:sapling"}, rarity = 16,},
 			{items = {"moonrealm:appleleaf"},}
 		}
 	},
@@ -391,9 +391,9 @@ minetest.register_craft({
 minetest.register_craft({
 	output = "moonrealm:hlsource",
 	recipe = {
-		{"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
-		{"moonrealm:leaves", "moonrealm:waterice", "moonrealm:leaves"},
-		{"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
+		{"moonrealm:appleleaf", "moonrealm:appleleaf", "moonrealm:appleleaf"},
+		{"moonrealm:appleleaf", "moonrealm:waterice", "moonrealm:appleleaf"},
+		{"moonrealm:appleleaf", "moonrealm:appleleaf", "moonrealm:appleleaf"},
 	},
 })
 
@@ -465,13 +465,6 @@ minetest.register_craft({
 	},
 })
 
-minetest.register_craft({
-	output = "moonrealm:sapling",
-	recipe = {
-		{"default:mese_crystal"},
-		{"default:sapling"},
-	}
-})
 
 -- Cooking
 

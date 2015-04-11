@@ -482,23 +482,23 @@ function moonrealm_spawnplayer(player)
 	end
 
 	print ("[moonrealm] spawn player ("..xsp.." "..ysp.." "..zsp..")")
+	player:setpos({x = xsp, y = ysp, z = zsp})
 
-	player:setpos({x=xsp, y=ysp, z=zsp})
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:spacesuit")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:sapling 4")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airlock 4")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airgen 4")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:hlsource 4")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:apple 64")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:pick_diamond")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:axe_diamond")
-	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:shovel_diamond")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:spacesuit 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:sapling 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:airlock 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:airgen 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:hlsource 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:apple 64")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:pick_diamond 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:axe_diamond 4")
+	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:shovel_diamond 4")
 
 	local vm = minetest.get_voxel_manip()
-	local pos1 = {x=xsp-3, y=ysp-3, z=zsp-3}
-	local pos2 = {x=xsp+3, y=ysp+6, z=zsp+3}
+	local pos1 = {x = xsp - 3, y = ysp - 3, z = zsp - 3}
+	local pos2 = {x = xsp + 3, y = ysp + 6, z = zsp + 3}
 	local emin, emax = vm:read_from_map(pos1, pos2)
-	local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 	local data = vm:get_data()
 	local c_shell = minetest.get_content_id("moonrealm:shell")
 	local c_light = minetest.get_content_id("moonrealm:light")

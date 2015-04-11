@@ -1,4 +1,4 @@
-moonrealm 0.9.1 by paramat
+moonrealm 0.9.2 by paramat
 For Minetest 0.4.12 or later
 Depends default
 Licenses: Code LGPL 2.1. Media CC BY-SA
@@ -6,12 +6,11 @@ Licenses: Code LGPL 2.1. Media CC BY-SA
 
 Version changes:
 
-Call this 0.9.1, 0.8.2 should have been called 0.9.0
-GRADCEN = 1 for terrain consistent with previous versions
-Use default ice texture
-Mod is now for singlenode mapgen only
-Move spawnplayer function to init.lua, avoids duplication of parameters
-Cleanup crafting code
+Hlsource crafting bugfix.
+Remove moonrealm:sapling crafting.
+Moonrealm:appleleaf drops more saplings.
+More items given on spawn.
+Cleanup code.
 
 
 Crafting
@@ -42,14 +41,6 @@ W-W
 W = wool white (fabric)
 H = moonrealm helmet
 L = moonrealm lifesupport
-
-
-
-Moonrealm sapling.
--C-
--S-
-C = default mese crystal
-S = sapling
 
 Moon stone brick x 4.
 MM
@@ -109,6 +100,6 @@ A depth of 2 soil nodes with moonrealm air above is needed for a moonrealm sapli
 LLL
 LIL
 LLL
-L = moonrealm leaves
+L = moonrealm appleleaf
 I = moonrealm waterice
 
