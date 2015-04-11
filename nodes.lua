@@ -129,7 +129,7 @@ minetest.register_node("moonrealm:airgen", {
 				if nodename == "moonrealm:vacuum" then
 					minetest.add_node({x=x+i,y=y+j,z=z+k},{name="moonrealm:air"})
 					minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", 16)
-					print ("[moonrealm] Added MR air node")
+					print ("[moonrealm] Added moonrealm air node")
 				end
 			end
 		end
@@ -141,7 +141,7 @@ minetest.register_node("moonrealm:airgen", {
 
 minetest.register_node("moonrealm:waterice", {
 	description = "Water Ice",
-	tiles = {"moonrealm_waterice.png"},
+	tiles = {"default_ice.png"},
 	light_source = 1,
 	paramtype = "light",
 	is_ground_content = false,
@@ -364,21 +364,21 @@ minetest.register_craftitem("moonrealm:lifesupport", {
 -- Crafting
 
 minetest.register_craft({
-    output = "moonrealm:airlock",
-    recipe = {
-        {"default:steel_ingot", "", "default:steel_ingot"},
-        {"default:steel_ingot", "default:mese", "default:steel_ingot"},
-        {"default:steel_ingot", "", "default:steel_ingot"},
-    },
+	output = "moonrealm:airlock",
+	recipe = {
+		{"default:steel_ingot", "", "default:steel_ingot"},
+		{"default:steel_ingot", "default:mese", "default:steel_ingot"},
+		{"default:steel_ingot", "", "default:steel_ingot"},
+	},
 })
 
 minetest.register_craft({
-    output = "moonrealm:airgen",
-    recipe = {
-        {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
-        {"moonrealm:waterice", "default:mese", "moonrealm:waterice"},
-        {"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
-    },
+	output = "moonrealm:airgen",
+	recipe = {
+		{"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
+		{"moonrealm:waterice", "default:mese", "moonrealm:waterice"},
+		{"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
+	},
 })
 
 minetest.register_craft({
@@ -389,12 +389,12 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-    output = "moonrealm:hlsource",
-    recipe = {
-        {"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
-        {"moonrealm:leaves", "moonrealm:waterice", "moonrealm:leaves"},
-        {"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
-    },
+	output = "moonrealm:hlsource",
+	recipe = {
+		{"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
+		{"moonrealm:leaves", "moonrealm:waterice", "moonrealm:leaves"},
+		{"moonrealm:leaves", "moonrealm:leaves", "moonrealm:leaves"},
+	},
 })
 
 minetest.register_craft({
@@ -406,12 +406,12 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-    output = "default:furnace",
-    recipe = {
-        {"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
-        {"moonrealm:stone", "", "moonrealm:stone"},
-        {"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
-    },
+	output = "default:furnace",
+	recipe = {
+		{"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
+		{"moonrealm:stone", "", "moonrealm:stone"},
+		{"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
+	},
 })
 
 minetest.register_craft({
@@ -457,12 +457,12 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-    output = "moonrealm:light 8",
-    recipe = {
-        {"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
-        {"moonrealm:glass", "default:mese", "moonrealm:glass"},
-        {"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
-    },
+	output = "moonrealm:light 8",
+	recipe = {
+		{"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
+		{"moonrealm:glass", "default:mese", "moonrealm:glass"},
+		{"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
+	},
 })
 
 minetest.register_craft({

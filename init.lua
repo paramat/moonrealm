@@ -1,6 +1,5 @@
 -- Parameters
 
-local SINGLENODE = true -- Set to true if using singlenode mapgen
 local YMIN = -8000 -- Approx lower limit
 local GRADCEN = 1 -- Gradient centre / terrain centre average level
 local YMAX = 8000 -- Approx upper limit
@@ -9,17 +8,18 @@ local XMAX = 8000
 local ZMIN = -8000
 local ZMAX = 8000
 
-local FOOT = true -- Footprints in dust
 local CENAMP = 64 -- Grad centre amplitude, terrain centre is varied by this
 local HIGRAD = 128 -- Surface generating noise gradient above gradcen, controls depth of upper terrain
 local LOGRAD = 128 -- Surface generating noise gradient below gradcen, controls depth of lower terrain
 local HEXP = 0.5 -- Noise offset exponent above gradcen, 1 = normal 3D perlin terrain
 local LEXP = 2 -- Noise offset exponent below gradcen
 local STOT = 0.04 -- Stone density threshold, depth of dust
+
 local ICECHA = 1 / (13*13*13) -- Ice chance per dust node at terrain centre, decreases with altitude
 local ICEGRAD = 128 -- Ice gradient, vertical distance for no ice
 local ORECHA = 7*7*7 -- Ore 1/x chance per stone node
 local TFIS = 0.01 -- Fissure threshold. Controls size of fissures
+local FOOT = true -- Footprints in dust
 
 -- 3D noise for terrain
 
@@ -106,13 +106,11 @@ dofile(minetest.get_modpath("moonrealm").."/nodes.lua")
 dofile(minetest.get_modpath("moonrealm").."/functions.lua")
 
 
--- Set water level in singlenode mapgen
+-- Set mapgen parameters
 
-if SINGLENODE then
-	minetest.register_on_mapgen_init(function(mgparams)
-		minetest.set_mapgen_params({water_level=-32000})
-	end)
-end
+minetest.register_on_mapgen_init(function(mgparams)
+	minetest.set_mapgen_params({mgname="singlenode", water_level=-32000})
+end)
 
 
 -- Player positions
@@ -178,12 +176,14 @@ minetest.register_globalstep(function(dtime)
 				z = player_pos[player:get_player_name()].z
 			}
 		end
+
 		if math.random() < 0.1 then -- spacesuit restores breath
 			if player:get_inventory():contains_item("main", "moonrealm:spacesuit") and
 					player:get_breath() < 10 then
 				player:set_breath(10)
 			end
 		end
+
 		if math.random() > 0.99 then -- set gravity, skybox and override light
 			local pos = player:getpos()
 			if pos.y > YMIN and pos.y < YMAX then -- entering realm
@@ -277,7 +277,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_terblen = nobj_terblen:get2dMap_flat(minpos2d)
 	local nvals_gradcen = nobj_gradcen:get2dMap_flat(minpos2d)
 	
-	local ni = 1
+	local ni3d = 1
 	local ni2d = 1
 	local stable = {}
 	for z = z0, z1 do
@@ -301,25 +301,26 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				local grad
 				local density
 				local si = x - x0 + 1
-				local terblen = math.max(math.min(math.abs(nvals_terblen[ni2d]) * 4, 1.5), 0.5) - 0.5
+				local terblen = math.max(math.min(math.abs(nvals_terblen[ni2d]) * 4,
+										1.5), 0.5) - 0.5
 				local gradcen = GRADCEN + nvals_gradcen[ni2d] * CENAMP
 				if y > gradcen then
 					grad = -((y - gradcen) / HIGRAD) ^ HEXP
 				else
 					grad = ((gradcen - y) / LOGRAD) ^ LEXP
 				end
-				if nvals_fault[ni] >= 0 then
-					density = (nvals_terrain[ni] +
-							nvals_terralt[ni]) / 2 * (1 - terblen)
-							+ nvals_smooth[ni] * terblen + grad
+				if nvals_fault[ni3d] >= 0 then
+					density = (nvals_terrain[ni3d] +
+							nvals_terralt[ni3d]) / 2 * (1 - terblen)
+							+ nvals_smooth[ni3d] * terblen + grad
 				else	
-					density = (nvals_terrain[ni] -
-							nvals_terralt[ni]) / 2 * (1 - terblen)
-							- nvals_smooth[ni] * terblen + grad
+					density = (nvals_terrain[ni3d] -
+							nvals_terralt[ni3d]) / 2 * (1 - terblen)
+							- nvals_smooth[ni3d] * terblen + grad
 				end
 				if density > 0 and empty then -- if terrain and node empty
 					local nofis = false
-					if math.abs(nvals_fissure[ni]) > TFIS then
+					if math.abs(nvals_fissure[ni3d]) > TFIS then
 						nofis = true
 					end
 					if density >= STOT and nofis then -- stone, ores 
@@ -361,7 +362,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 					stable[si] = false
 				end
-				ni = ni + 1
+				ni3d = ni3d + 1
 				ni2d = ni2d + 1
 				vi = vi + 1
 			end
@@ -377,5 +378,166 @@ minetest.register_on_generated(function(minp, maxp, seed)
 
 	local chugent = math.ceil((os.clock() - t1) * 1000)
 	print ("[moonrealm] "..chugent.." ms  chunk ("..x0.." "..y0.." "..z0..")")
+end)
+
+
+-- Spawn player function, dependant on chunk size of 80 nodes
+
+function moonrealm_spawnplayer(player)
+	local PSCA = 16
+	local xsp
+	local ysp
+	local zsp
+
+	local nobj_terrain = nil
+	local nobj_terralt = nil
+	local nobj_smooth = nil
+	local nobj_fault = nil
+
+	local nobj_terblen = nil
+	local nobj_gradcen = nil
+
+	for chunk = 1, 64 do
+		print ("[moonrealm] searching for spawn "..chunk)
+
+		local x0 = 80 * math.random(-PSCA, PSCA) - 32
+		local z0 = 80 * math.random(-PSCA, PSCA) - 32
+		local y0 = 80 * math.floor((GRADCEN + 32) / 80) - 32
+		local x1 = x0 + 79
+		local z1 = z0 + 79
+		local y1 = y0 + 79
+	
+		local chulens = x1 - x0 + 1
+		local pmaplens2d = {x = chulens, y = chulens, z = 1}
+		local pmaplens3d = {x = chulens, y = chulens, z = chulens}
+		local minpos2d = {x = x0, y = z0}
+		local minpos3d = {x = x0, y = y0, z = z0}
+	
+		nobj_terrain = nobj_terrain or minetest.get_perlin_map(np_terrain, pmaplens3d)
+		nobj_terralt = nobj_terralt or minetest.get_perlin_map(np_terralt, pmaplens3d)
+		nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, pmaplens3d)
+		nobj_fault   = nobj_fault   or minetest.get_perlin_map(np_fault, pmaplens3d)
+	
+		nobj_terblen = nobj_terblen or minetest.get_perlin_map(np_terblen, pmaplens2d)
+		nobj_gradcen = nobj_gradcen or minetest.get_perlin_map(np_gradcen, pmaplens2d)
+	
+		local nvals_terrain = nobj_terrain:get3dMap_flat(minpos3d)
+		local nvals_terralt = nobj_terralt:get3dMap_flat(minpos3d)
+		local nvals_smooth  = nobj_smooth :get3dMap_flat(minpos3d)
+		local nvals_fault   = nobj_fault  :get3dMap_flat(minpos3d)
+	
+		local nvals_terblen = nobj_terblen:get2dMap_flat(minpos2d)
+		local nvals_gradcen = nobj_gradcen:get2dMap_flat(minpos2d)
+	
+		local ni3d = 1
+		local ni2d = 1
+		local stable = {}
+		for z = z0, z1 do
+			for y = y0, y1 do
+				for x = x0, x1 do
+					local si = x - x0 + 1
+					local grad
+					local density
+					local terblen = math.max(math.min(math.abs(nvals_terblen[ni2d]) * 4,
+											1.5), 0.5) - 0.5
+					local gradcen = GRADCEN + nvals_gradcen[ni2d] * CENAMP
+					if y > gradcen then
+						grad = -((y - gradcen) / HIGRAD) ^ HEXP
+					else
+						grad = ((gradcen - y) / LOGRAD) ^ LEXP
+					end
+					if nvals_fault[ni3d] >= 0 then
+						density = (nvals_terrain[ni3d] +
+								nvals_terralt[ni3d]) / 2 * (1 - terblen)
+								+ nvals_smooth[ni3d] * terblen + grad
+					else	
+						density = (nvals_terrain[ni3d] -
+								nvals_terralt[ni3d]) / 2 * (1 - terblen)
+								- nvals_smooth[ni3d] * terblen + grad
+					end
+					if density >= STOT then
+						stable[si] = true
+					elseif stable[si] and density < 0 and terblen == 1 then
+						ysp = y + 4
+						xsp = x
+						zsp = z
+						break
+					end
+					ni3d = ni3d + 1
+					ni2d = ni2d + 1
+				end
+				if ysp then
+					break
+				end
+				ni2d = ni2d - chulens
+			end
+			if ysp then
+				break
+			end
+			ni2d = ni2d + chulens
+		end
+		if ysp then
+			break
+		end
+	end
+
+	print ("[moonrealm] spawn player ("..xsp.." "..ysp.." "..zsp..")")
+
+	player:setpos({x=xsp, y=ysp, z=zsp})
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:spacesuit")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:sapling 4")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airlock 4")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:airgen 4")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "moonrealm:hlsource 4")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:apple 64")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:pick_diamond")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:axe_diamond")
+	minetest.add_item({x=xsp, y=ysp+1, z=zsp}, "default:shovel_diamond")
+
+	local vm = minetest.get_voxel_manip()
+	local pos1 = {x=xsp-3, y=ysp-3, z=zsp-3}
+	local pos2 = {x=xsp+3, y=ysp+6, z=zsp+3}
+	local emin, emax = vm:read_from_map(pos1, pos2)
+	local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	local data = vm:get_data()
+	local c_shell = minetest.get_content_id("moonrealm:shell")
+	local c_light = minetest.get_content_id("moonrealm:light")
+	local c_lsair = minetest.get_content_id("moonrealm:air")
+
+	for i = -3, 3 do
+	for j = -3, 6 do
+	for k = -3, 3 do
+		local vi = area:index(xsp + i, ysp + j, zsp + k)
+		local rad
+		if j <= 0 then
+			rad = math.sqrt(i ^ 2 + j ^ 2 + k ^ 2)
+		else
+			rad = math.sqrt(i ^ 2 + j ^ 2 * 0.3 + k ^ 2)
+		end
+		if rad <= 3.5 then
+			if rad >= 2.5 then
+				data[vi] = c_shell
+			elseif rad >= 1.5 then
+				data[vi] = c_light
+			else
+				data[vi] = c_lsair
+			end
+		end
+	end
+	end
+	end
+	vm:set_data(data)
+	vm:write_to_map()
+	vm:update_map()
+end
+
+
+minetest.register_on_newplayer(function(player)
+	moonrealm_spawnplayer(player)
+end)
+
+minetest.register_on_respawnplayer(function(player)
+	moonrealm_spawnplayer(player)
+	return true
 end)
 

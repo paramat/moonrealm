@@ -1,4 +1,4 @@
-moonrealm 0.8.2 by paramat
+moonrealm 0.9.1 by paramat
 For Minetest 0.4.12 or later
 Depends default
 Licenses: Code LGPL 2.1. Media CC BY-SA
@@ -6,15 +6,12 @@ Licenses: Code LGPL 2.1. Media CC BY-SA
 
 Version changes:
 
-Shell drops nothing
-Simpler appletree with vi = vi + 1 optimisation, more apples
-New licences
-paramtype = "light" for light sources
-No longer override day night ratio on joinplayer to avoid darkness
-Set SPAWNEGG in functions.lua to enable spawnegg spawning in moonrealm
-Moonrealm mese glows and drops default:mese
-Shorten lines, cleanup code, fix undeclared globals
-Noise objects created only once
+Call this 0.9.1, 0.8.2 should have been called 0.9.0
+GRADCEN = 1 for terrain consistent with previous versions
+Use default ice texture
+Mod is now for singlenode mapgen only
+Move spawnplayer function to init.lua, avoids duplication of parameters
+Cleanup crafting code
 
 
 Crafting
