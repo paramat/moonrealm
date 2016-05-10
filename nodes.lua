@@ -277,7 +277,8 @@ minetest.register_node("moonrealm:light", {
 
 minetest.register_node("moonrealm:stonebrick", {
 	description = "Moon Stone Brick",
-	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
+	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png",
+		"moonrealm_stonebrick.png"},
 	is_ground_content = false,
 	groups = {cracky=3},
 	sounds = default.node_sound_stone_defaults(),
@@ -285,12 +286,12 @@ minetest.register_node("moonrealm:stonebrick", {
 
 minetest.register_node("moonrealm:stoneslab", {
 	description = "Moon Stone Slab",
-	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
+	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png",
+		"moonrealm_stonebrick.png"},
 	drawtype = "nodebox",
 	paramtype = "light",
 	is_ground_content = false,
-	sunlight_propagates = true,
-	buildable_to = true,
+	--sunlight_propagates = true,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -309,7 +310,8 @@ minetest.register_node("moonrealm:stoneslab", {
 
 minetest.register_node("moonrealm:stonestair", {
 	description = "Moon Stone Stair",
-	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png", "moonrealm_stonebrick.png"},
+	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png",
+		"moonrealm_stonebrick.png"},
 	drawtype = "nodebox",
 	paramtype = "light",
 	paramtype2 = "facedir",
@@ -463,6 +465,12 @@ minetest.register_craft({
 		{"moonrealm:glass", "default:mese", "moonrealm:glass"},
 		{"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
 	},
+})
+
+minetest.register_craft({
+	type = "shapeless",
+	output = "moonrealm:light 1",
+	recipe = {"moonrealm:glass", "default:mese_crystal"},
 })
 
 

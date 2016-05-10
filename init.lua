@@ -113,17 +113,27 @@ minetest.register_on_mapgen_init(function(mgparams)
 end)
 
 
--- Player positions
+-- Player positions, spacesuit texture status
 
 local player_pos = {}
 local player_pos_previous = {}
+local player_spacesuit = {}
 
 minetest.register_on_joinplayer(function(player)
 	player_pos_previous[player:get_player_name()] = {x = 0, y = 0, z = 0}
+
+	if player:get_inventory():contains_item("main", "moonrealm:spacesuit") then
+		player:set_properties({textures = {"moonrealm_space_character.png"}})
+		player_spacesuit[player:get_player_name()] = true
+	else
+		player:set_properties({textures = {"moonrealm_character.png"}})
+		player_spacesuit[player:get_player_name()] = false
+	end
 end)
 
 minetest.register_on_leaveplayer(function(player)
 	player_pos_previous[player:get_player_name()] = nil
+	player_spacesuit[player:get_player_name()] = nil
 end)
 
 
@@ -131,8 +141,8 @@ end)
 
 minetest.register_globalstep(function(dtime)
 	for _, player in ipairs(minetest.get_connected_players()) do
-		if player_pos_previous[player:get_player_name()] ~= nil and -- footprints
-				FOOT and math.random() < 0.3 then
+		if FOOT and math.random() < 0.2 and -- footprints
+				player_pos_previous[player:get_player_name()] ~= nil then
 			local pos = player:getpos()
 			player_pos[player:get_player_name()] = {
 				x = math.floor(pos.x + 0.5),
@@ -177,14 +187,25 @@ minetest.register_globalstep(function(dtime)
 			}
 		end
 
-		if math.random() < 0.1 then -- spacesuit restores breath
-			if player:get_inventory():contains_item("main", "moonrealm:spacesuit") and
-					player:get_breath() < 10 then
-				player:set_breath(10)
+		if math.random() < 0.04 then -- spacesuit restores breath, reset spacesuit texture
+			if player:get_inventory():contains_item("main", "moonrealm:spacesuit") then
+				if player:get_breath() < 10 then
+					player:set_breath(10)
+				end
+
+				if player_spacesuit[player:get_player_name()] == false then -- if no spacesuit texture, add
+					player:set_properties({textures = {"moonrealm_space_character.png"}})
+					player_spacesuit[player:get_player_name()] = true
+				end
+			else -- no spacesuit in inventory
+				if player_spacesuit[player:get_player_name()] == true then -- if spacesuit texture, remove
+					player:set_properties({textures = {"moonrealm_character.png"}})
+					player_spacesuit[player:get_player_name()] = false
+				end
 			end
 		end
 
-		if math.random() > 0.99 then -- set gravity, skybox and override light
+		if math.random() < 0.01 then -- set gravity, skybox and override light
 			local pos = player:getpos()
 			if pos.y > YMIN and pos.y < YMAX then -- entering realm
 				player:set_physics_override(1, 0.6, 0.2) -- speed, jump, gravity
@@ -377,7 +398,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	vm:write_to_map(data)
 
 	local chugent = math.ceil((os.clock() - t1) * 1000)
-	print ("[moonrealm] "..chugent.." ms  chunk ("..x0.." "..y0.." "..z0..")")
+	print ("[moonrealm] "..chugent.." ms")
 end)
 
 
