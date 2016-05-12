@@ -12,10 +12,10 @@ function moonrealm_appletree(pos)
 	local c_lsair = minetest.get_content_id("moonrealm:air")
 
 	local vm = minetest.get_voxel_manip()
-	local pos1 = {x=x-2, y=y-2, z=z-2}
-	local pos2 = {x=x+2, y=y+5, z=z+2}
+	local pos1 = {x = x - 2, y = y - 2, z = z - 2}
+	local pos2 = {x = x + 2, y = y + 5, z = z + 2}
 	local emin, emax = vm:read_from_map(pos1, pos2)
-	local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 	local data = vm:get_data()
 
 	for j = -2, -1 do -- check for soil
@@ -73,7 +73,7 @@ function moonrealm_appletree(pos)
 	vm:write_to_map()
 	vm:update_map()
 
-	print ("[moonrealm] moonrealm apple tree sapling grows")
+	print ("[moonrealm] apple tree sapling grows")
 end
 
 
@@ -87,28 +87,29 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
 
 	local vm = minetest.get_voxel_manip()
-	local pos1 = {x=x-1, y=y-1, z=z-1}
-	local pos2 = {x=x+1, y=y+1, z=z+1}
+	local pos1 = {x = x - 1, y = y - 1, z = z - 1}
+	local pos2 = {x = x + 1, y = y + 1, z = z + 1}
 	local emin, emax = vm:read_from_map(pos1, pos2)
-	local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+	local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 	local data = vm:get_data()
 
 	local vic = area:index(x, y, z)
-	for j = -1,1 do
-	for k = -1,1 do
-		local vi = area:index(x-1, y+j, z+k)
-		for i = -1,1 do
+
+	for j = -1, 1 do
+	for k = -1, 1 do
+		local vi = area:index(x - 1, y + j, z + k)
+		for i = -1, 1 do
 			if not (i == 0 and j == 0 and k == 0) then
 				local nodid = data[vi]
 				if nodid == c_lsair then	
-					local spread = minetest.get_meta({x=x+i,y=y+j,z=z+k}):get_int("spread")
+					local spread = minetest.get_meta({x = x + i, y = y + j, z = z + k}):get_int("spread")
 					if spread > 0 then
 						data[vic] = c_lsair
 						minetest.get_meta(pos):set_int("spread", (spread - 1))
 						vm:set_data(data)
 						vm:write_to_map()			
 						vm:update_map()
-						print ("[moonrealm] moonrealm air flows into hole")
+						print ("[moonrealm] air flows into hole")
 						return
 					end
 				end
@@ -118,10 +119,12 @@ minetest.register_on_dignode(function(pos, oldnode, digger)
 	end
 	end
 	data[vic] = c_vacuum
+
 	vm:set_data(data)
 	vm:write_to_map()
 	vm:update_map()
-	print ("[moonrealm] moonrealm vacuum flows into hole")
+
+	print ("[moonrealm] vacuum flows into hole")
 end)
 
 
@@ -145,22 +148,22 @@ minetest.register_abm({
 		local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
 	
 		local vm = minetest.get_voxel_manip()
-		local pos1 = {x=x-1, y=y-1, z=z-1}
-		local pos2 = {x=x+1, y=y+1, z=z+1}
+		local pos1 = {x = x - 1, y = y - 1, z = z - 1}
+		local pos2 = {x = x + 1, y = y + 1, z = z + 1}
 		local emin, emax = vm:read_from_map(pos1, pos2)
-		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 		local data = vm:get_data()
 
-		for j = -1,1 do
-		for k = -1,1 do
-			local vi = area:index(x-1, y+j, z+k)
-			for i = -1,1 do
+		for j = -1, 1 do
+		for k = -1, 1 do
+			local vi = area:index(x - 1, y + j, z + k)
+			for i = -1, 1 do
 				if not (i == 0 and j == 0 and k == 0) then
 					local nodid = data[vi]
 					if nodid == c_vacuum then
 						data[vi] = c_lsair
-						minetest.get_meta({x=x+i,y=y+j,z=z+k}):set_int("spread", (spread - 1))
-						print ("[moonrealm] moonrealm air spreads")
+						minetest.get_meta({x = x + i, y = y + j, z = z + k}):set_int("spread", (spread - 1))
+						print ("[moonrealm] air spreads")
 					end
 				end
 				vi = vi + 1
@@ -193,16 +196,16 @@ minetest.register_abm({
 		local c_soil = minetest.get_content_id("moonrealm:soil")
 	
 		local vm = minetest.get_voxel_manip()
-		local pos1 = {x=x-2, y=y-4, z=z-2}
-		local pos2 = {x=x+2, y=y, z=z+2}
+		local pos1 = {x = x - 2, y = y - 4, z = z - 2}
+		local pos2 = {x = x + 2, y = y, z = z + 2}
 		local emin, emax = vm:read_from_map(pos1, pos2)
-		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 		local data = vm:get_data()
 
-		for j = -4,0 do
-		for k = -2,2 do
-			local vi = area:index(x-2, y+j, z+k)
-			for i = -2,2 do
+		for j = -4, 0 do
+		for k = -2, 2 do
+			local vi = area:index(x - 2, y + j, z + k)
+			for i = -2, 2 do
 				if not (i == 0 and j == 0 and k == 0) then
 					local nodid = data[vi]
 					if nodid == c_dust
@@ -238,16 +241,16 @@ minetest.register_abm({
 		local c_hlsource = minetest.get_content_id("moonrealm:hlsource")
 	
 		local vm = minetest.get_voxel_manip()
-		local pos1 = {x=x-2, y=y, z=z-2}
-		local pos2 = {x=x+2, y=y+4, z=z+2}
+		local pos1 = {x = x - 2, y = y, z = z - 2}
+		local pos2 = {x = x + 2, y = y + 4, z = z + 2}
 		local emin, emax = vm:read_from_map(pos1, pos2)
-		local area = VoxelArea:new({MinEdge=emin, MaxEdge=emax})
+		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 		local data = vm:get_data()
 
 		local vic = area:index(x, y, z)
 		for j = 0, 4 do
 		for k = -2, 2 do
-			local vi = area:index(x-2, y+j, z+k)
+			local vi = area:index(x - 2, y + j, z + k)
 			for i = -2, 2 do
 				if not (i == 0 and j == 0 and k == 0) then
 					local nodid = data[vi]
@@ -259,13 +262,14 @@ minetest.register_abm({
 			end
 		end
 		end
+
 		data[vic] = c_dust
 
 		vm:set_data(data)
 		vm:write_to_map()
 		vm:update_map()
 
-		print ("[moonrealm] moonrealm soil dries")
+		print ("[moonrealm] soil dries")
 	end,
 })
 
@@ -280,4 +284,3 @@ minetest.register_abm({
 		moonrealm_appletree(pos)
 	end,
 })
-

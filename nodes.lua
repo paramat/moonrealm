@@ -2,7 +2,7 @@ minetest.register_node("moonrealm:stone", {
 	description = "Moon Stone",
 	tiles = {"moonrealm_stone.png"},
 	is_ground_content = false,
-	groups = {cracky=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -10,7 +10,7 @@ minetest.register_node("moonrealm:ironore", {
 	description = "Iron Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_iron.png"},
 	is_ground_content = false,
-	groups = {cracky=2},
+	groups = {cracky = 2},
 	drop = "default:iron_lump",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -19,7 +19,7 @@ minetest.register_node("moonrealm:copperore", {
 	description = "Copper Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_copper.png"},
 	is_ground_content = false,
-	groups = {cracky=2},
+	groups = {cracky = 2},
 	drop = "default:copper_lump",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -28,7 +28,7 @@ minetest.register_node("moonrealm:goldore", {
 	description = "Gold Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_gold.png"},
 	is_ground_content = false,
-	groups = {cracky=2},
+	groups = {cracky = 2},
 	drop = "default:gold_lump",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -37,7 +37,7 @@ minetest.register_node("moonrealm:diamondore", {
 	description = "Diamond Ore",
 	tiles = {"moonrealm_stone.png^default_mineral_diamond.png"},
 	is_ground_content = false,
-	groups = {cracky=1},
+	groups = {cracky = 1},
 	drop = "default:diamond",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -48,7 +48,7 @@ minetest.register_node("moonrealm:mese", {
 	paramtype = "light",
 	light_source = 3,
 	is_ground_content = false,
-	groups = {cracky=1, level=2},
+	groups = {cracky = 1, level = 2},
 	drop = "default:mese",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -57,9 +57,9 @@ minetest.register_node("moonrealm:dust", {
 	description = "Moon Dust",
 	tiles = {"moonrealm_dust.png"},
 	is_ground_content = false,
-	groups = {crumbly=3},
+	groups = {crumbly = 3},
 	sounds = default.node_sound_sand_defaults({
-		footstep = {name="default_sand_footstep", gain=0.05},
+		footstep = {name = "default_sand_footstep", gain = 0.05},
 	}),
 })
 
@@ -67,10 +67,10 @@ minetest.register_node("moonrealm:dustprint1", {
 	description = "Moon Dust Footprint1",
 	tiles = {"moonrealm_dustprint1.png", "moonrealm_dust.png"},
 	is_ground_content = false,
-	groups = {crumbly=3},
+	groups = {crumbly = 3},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_sand_defaults({
-		footstep = {name="default_sand_footstep", gain=0.05},
+		footstep = {name = "default_sand_footstep", gain = 0.05},
 	}),
 })
 
@@ -78,10 +78,10 @@ minetest.register_node("moonrealm:dustprint2", {
 	description = "Moon Dust Footprint2",
 	tiles = {"moonrealm_dustprint2.png", "moonrealm_dust.png"},
 	is_ground_content = false,
-	groups = {crumbly=3},
+	groups = {crumbly = 3},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_sand_defaults({
-		footstep = {name="default_sand_footstep", gain=0.05},
+		footstep = {name = "default_sand_footstep", gain = 0.05},
 	}),
 })
 
@@ -95,6 +95,7 @@ minetest.register_node("moonrealm:vacuum", {
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
+	floodable = true,
 	drowning = 1,
 })
 
@@ -109,13 +110,14 @@ minetest.register_node("moonrealm:air", {
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
+	floodable = true,
 })
 
 minetest.register_node("moonrealm:airgen", {
 	description = "Air Generator",
 	tiles = {"moonrealm_airgen.png"},
 	is_ground_content = false,
-	groups = {cracky=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 	on_construct = function(pos)
 		local x = pos.x
@@ -146,7 +148,7 @@ minetest.register_node("moonrealm:waterice", {
 	paramtype = "light",
 	is_ground_content = false,
 	sunlight_propagates = true,
-	groups = {cracky=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -158,13 +160,15 @@ minetest.register_node("moonrealm:hlflowing", {
 	special_tiles = {
 		{
 			image="moonrealm_hlflowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2}
+			backface_culling = false,
+			animation = {type = "vertical_frames",
+				aspect_w = 16, aspect_h = 16, length = 2}
 		},
 		{
-			image="moonrealm_hlflowing_animated.png",
-			backface_culling=true,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2}
+			image = "moonrealm_hlflowing_animated.png",
+			backface_culling = true,
+			animation = {type = "vertical_frames",
+				aspect_w = 16, aspect_h = 16, length = 2}
 		},
 	},
 	alpha = 224,
@@ -178,8 +182,8 @@ minetest.register_node("moonrealm:hlflowing", {
 	liquid_alternative_flowing = "moonrealm:hlflowing",
 	liquid_alternative_source = "moonrealm:hlsource",
 	liquid_viscosity = 1,
-	post_effect_color = {a=224, r=115, g=55, b=24},
-	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
+	post_effect_color = {a = 224, r = 115, g = 55, b = 24},
+	groups = {water = 3, liquid = 3, puts_out_fire = 1},
 })
 
 minetest.register_node("moonrealm:hlsource", {
@@ -197,15 +201,15 @@ minetest.register_node("moonrealm:hlsource", {
 	liquid_alternative_flowing = "moonrealm:hlflowing",
 	liquid_alternative_source = "moonrealm:hlsource",
 	liquid_viscosity = 1,
-	post_effect_color = {a=224, r=115, g=55, b=24},
-	groups = {water=3, liquid=3, puts_out_fire=1},
+	post_effect_color = {a = 224, r = 115, g = 55, b = 24},
+	groups = {water = 3, liquid = 3, puts_out_fire = 1},
 })
 
 minetest.register_node("moonrealm:soil", {
 	description = "Moonsoil",
 	tiles = {"moonrealm_soil.png"},
 	is_ground_content = false,
-	groups = {crumbly=3},
+	groups = {crumbly = 3, soil = 1},
 	drop = "moonrealm:dust",
 	sounds = default.node_sound_dirt_defaults(),
 })
@@ -217,8 +221,8 @@ minetest.register_node("moonrealm:airlock", {
 	light_source = 14,
 	is_ground_content = false,
 	walkable = false,
-	post_effect_color = {a=255, r=0, g=0, b=0},
-	groups = {cracky=3},
+	post_effect_color = {a = 255, r = 181, g = 181, b = 181},
+	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -229,7 +233,7 @@ minetest.register_node("moonrealm:glass", {
 	paramtype = "light",
 	is_ground_content = false,
 	sunlight_propagates = true,
-	groups = {cracky=3, oddly_breakable_by_hand=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -243,7 +247,7 @@ minetest.register_node("moonrealm:sapling", {
 	paramtype = "light",
 	is_ground_content = false,
 	walkable = false,
-	groups = {snappy=2, dig_immediate=3, flammable=2},
+	groups = {snappy = 2, dig_immediate = 3, flammable = 2},
 	sounds = default.node_sound_defaults(),
 })
 
@@ -254,7 +258,7 @@ minetest.register_node("moonrealm:appleleaf", {
 	tiles = {"default_leaves.png"},
 	paramtype = "light",
 	is_ground_content = false,
-	groups = {snappy=3, leafdecay=3, flammable=2, leaves=1},
+	groups = {snappy = 3, flammable = 2, leaves = 1},
 	drop = {
 		max_items = 1,
 		items = {
@@ -271,7 +275,7 @@ minetest.register_node("moonrealm:light", {
 	paramtype = "light",
 	light_source = 14,
 	is_ground_content = false,
-	groups = {cracky=3, oddly_breakable_by_hand=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -280,7 +284,7 @@ minetest.register_node("moonrealm:stonebrick", {
 	tiles = {"moonrealm_stonebricktop.png", "moonrealm_stonebrickbot.png",
 		"moonrealm_stonebrick.png"},
 	is_ground_content = false,
-	groups = {cracky=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -291,7 +295,6 @@ minetest.register_node("moonrealm:stoneslab", {
 	drawtype = "nodebox",
 	paramtype = "light",
 	is_ground_content = false,
-	--sunlight_propagates = true,
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -304,7 +307,7 @@ minetest.register_node("moonrealm:stoneslab", {
 			{-0.5, -0.5, -0.5, 0.5, 0, 0.5}
 		},
 	},
-	groups = {cracky=3},
+	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -316,7 +319,7 @@ minetest.register_node("moonrealm:stonestair", {
 	paramtype = "light",
 	paramtype2 = "facedir",
 	is_ground_content = false,
-	groups = {cracky=3},
+	groups = {cracky = 3},
 	node_box = {
 		type = "fixed",
 		fixed = {
@@ -338,7 +341,7 @@ minetest.register_node("moonrealm:shell", {
 	description = "Spawn Shell",
 	tiles = {"moonrealm_shell.png"},
 	is_ground_content = false,
-	groups = {cracky=3, oddly_breakable_by_hand=1},
+	groups = {cracky = 3},
 	drop = "",
 	sounds = default.node_sound_stone_defaults(),
 })
@@ -348,19 +351,18 @@ minetest.register_node("moonrealm:shell", {
 minetest.register_craftitem("moonrealm:spacesuit", {
 	description = "Spacesuit",
 	inventory_image = "moonrealm_spacesuit.png",
-	groups = {not_in_creative_inventory=1},
 })
 
 minetest.register_craftitem("moonrealm:helmet", {
 	description = "Mesetint Helmet",
 	inventory_image = "moonrealm_helmet.png",
-	groups = {not_in_creative_inventory=1},
+	groups = {not_in_creative_inventory = 1},
 })
 
 minetest.register_craftitem("moonrealm:lifesupport", {
 	description = "Life Support",
 	inventory_image = "moonrealm_lifesupport.png",
-	groups = {not_in_creative_inventory=1},
+	groups = {not_in_creative_inventory = 1},
 })
 
 -- Crafting
@@ -487,4 +489,3 @@ minetest.register_craft({
 	recipe = "default:mese_crystal",
 	burntime = 50,
 })
-

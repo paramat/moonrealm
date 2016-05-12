@@ -15,9 +15,9 @@ local HEXP = 0.5 -- Noise offset exponent above gradcen, 1 = normal 3D perlin te
 local LEXP = 2 -- Noise offset exponent below gradcen
 local STOT = 0.04 -- Stone density threshold, depth of dust
 
-local ICECHA = 1 / (13*13*13) -- Ice chance per dust node at terrain centre, decreases with altitude
+local ICECHA = 1 / (13 * 13 * 13) -- Ice chance per dust node at terrain centre, decreases with altitude
 local ICEGRAD = 128 -- Ice gradient, vertical distance for no ice
-local ORECHA = 7*7*7 -- Ore 1/x chance per stone node
+local ORECHA = 7 * 7 * 7 -- Ore 1/x chance per stone node
 local TFIS = 0.01 -- Fissure threshold. Controls size of fissures
 local FOOT = true -- Footprints in dust
 
@@ -26,7 +26,7 @@ local FOOT = true -- Footprints in dust
 local np_terrain = {
 	offset = 0,
 	scale = 1,
-	spread = {x=512, y=512, z=512},
+	spread = {x = 512, y = 512, z = 512},
 	seed = 58588900033,
 	octaves = 6,
 	persist = 0.67
@@ -37,7 +37,7 @@ local np_terrain = {
 local np_terralt = {
 	offset = 0,
 	scale = 1,
-	spread = {x=414, y=414, z=414},
+	spread = {x = 414, y = 414, z = 414},
 	seed = 13331930910,
 	octaves = 6,
 	persist = 0.67
@@ -48,7 +48,7 @@ local np_terralt = {
 local np_smooth = {
 	offset = 0,
 	scale = 1,
-	spread = {x=828, y=828, z=828},
+	spread = {x = 828, y = 828, z = 828},
 	seed = 113,
 	octaves = 4,
 	persist = 0.4
@@ -59,7 +59,7 @@ local np_smooth = {
 local np_fissure = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x = 256, y = 256, z = 256},
 	seed = 8181112,
 	octaves = 5,
 	persist = 0.5
@@ -71,7 +71,7 @@ local np_fissure = {
 local np_fault = {
 	offset = 0,
 	scale = 1,
-	spread = {x=414, y=828, z=414},
+	spread = {x = 414, y = 828, z = 414},
 	seed = 14440002,
 	octaves = 4,
 	persist = 0.5
@@ -82,7 +82,7 @@ local np_fault = {
 local np_gradcen = {
 	offset = 0,
 	scale = 1,
-	spread = {x=1024, y=1024, z=1024},
+	spread = {x = 1024, y = 1024, z = 1024},
 	seed = 9344,
 	octaves = 4,
 	persist = 0.4
@@ -93,7 +93,7 @@ local np_gradcen = {
 local np_terblen = {
 	offset = 0,
 	scale = 1,
-	spread = {x=2048, y=2048, z=2048},
+	spread = {x = 2048, y = 2048, z = 2048},
 	seed = -13002,
 	octaves = 3,
 	persist = 0.4
@@ -102,15 +102,13 @@ local np_terblen = {
 
 -- Do files
 
-dofile(minetest.get_modpath("moonrealm").."/nodes.lua")
-dofile(minetest.get_modpath("moonrealm").."/functions.lua")
+dofile(minetest.get_modpath("moonrealm") .. "/nodes.lua")
+dofile(minetest.get_modpath("moonrealm") .. "/functions.lua")
 
 
 -- Set mapgen parameters
 
-minetest.register_on_mapgen_init(function(mgparams)
-	minetest.set_mapgen_params({mgname="singlenode", water_level=-32000})
-end)
+minetest.set_mapgen_params({mgname = "singlenode", water_level = -32000})
 
 
 -- Player positions, spacesuit texture status
@@ -217,7 +215,7 @@ minetest.register_globalstep(function(dtime)
 					"moonrealm_negx.png",
 					"moonrealm_posx.png",
 				}
-				player:set_sky({r=0, g=0, b=0, a=0}, "skybox", skytextures)
+				player:set_sky({r = 0, g = 0, b = 0, a = 0}, "skybox", skytextures)
 				player:override_day_night_ratio(1)
 			else -- on leaving realm
 				player:set_physics_override(1, 1, 1)
@@ -259,7 +257,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local z0 = minp.z
 	
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
-	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
+	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
 	local data = vm:get_data()
 	
 	local c_air          = minetest.get_content_id("air")
@@ -301,8 +299,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local ni3d = 1
 	local ni2d = 1
 	local stable = {}
+
 	for z = z0, z1 do
 		local viu = area:index(x0, y0 - 1, z)
+
 		for x = x0, x1 do
 			local si = x - x0 + 1
 			local nodid = data[viu]
@@ -313,32 +313,37 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 			viu = viu + 1
 		end
+
 		for y = y0, y1 do
 			local vi = area:index(x0, y, z) -- LVM index for first node in x row
 			local icecha = ICECHA * (1 + (GRADCEN - y) / ICEGRAD)
+
 			for x = x0, x1 do
 				local nodid = data[vi]
 				local empty = (nodid == c_air or nodid == c_ignore)
 				local grad
 				local density
 				local si = x - x0 + 1
-				local terblen = math.max(math.min(math.abs(nvals_terblen[ni2d]) * 4,
-										1.5), 0.5) - 0.5
+				local terblen = math.max(math.min(
+					math.abs(nvals_terblen[ni2d]) * 4, 1.5), 0.5) - 0.5
 				local gradcen = GRADCEN + nvals_gradcen[ni2d] * CENAMP
+
 				if y > gradcen then
 					grad = -((y - gradcen) / HIGRAD) ^ HEXP
 				else
 					grad = ((gradcen - y) / LOGRAD) ^ LEXP
 				end
+
 				if nvals_fault[ni3d] >= 0 then
 					density = (nvals_terrain[ni3d] +
-							nvals_terralt[ni3d]) / 2 * (1 - terblen)
-							+ nvals_smooth[ni3d] * terblen + grad
+						nvals_terralt[ni3d]) / 2 * (1 - terblen) +
+						nvals_smooth[ni3d] * terblen + grad
 				else	
 					density = (nvals_terrain[ni3d] -
-							nvals_terralt[ni3d]) / 2 * (1 - terblen)
-							- nvals_smooth[ni3d] * terblen + grad
+						nvals_terralt[ni3d]) / 2 * (1 - terblen) -
+						nvals_smooth[ni3d] * terblen + grad
 				end
+
 				if density > 0 and empty then -- if terrain and node empty
 					local nofis = false
 					if math.abs(nvals_fissure[ni3d]) > TFIS then
@@ -383,6 +388,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 					stable[si] = false
 				end
+
 				ni3d = ni3d + 1
 				ni2d = ni2d + 1
 				vi = vi + 1
@@ -398,7 +404,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	vm:write_to_map(data)
 
 	local chugent = math.ceil((os.clock() - t1) * 1000)
-	print ("[moonrealm] "..chugent.." ms")
+	print ("[moonrealm] " .. chugent .. " ms")
 end)
 
 
@@ -419,7 +425,7 @@ function moonrealm_spawnplayer(player)
 	local nobj_gradcen = nil
 
 	for chunk = 1, 64 do
-		print ("[moonrealm] searching for spawn "..chunk)
+		print ("[moonrealm] searching for spawn " .. chunk)
 
 		local x0 = 80 * math.random(-PSCA, PSCA) - 32
 		local z0 = 80 * math.random(-PSCA, PSCA) - 32
@@ -453,29 +459,33 @@ function moonrealm_spawnplayer(player)
 		local ni3d = 1
 		local ni2d = 1
 		local stable = {}
+
 		for z = z0, z1 do
 			for y = y0, y1 do
 				for x = x0, x1 do
 					local si = x - x0 + 1
 					local grad
 					local density
-					local terblen = math.max(math.min(math.abs(nvals_terblen[ni2d]) * 4,
-											1.5), 0.5) - 0.5
+					local terblen = math.max(math.min(
+						math.abs(nvals_terblen[ni2d]) * 4, 1.5), 0.5) - 0.5
 					local gradcen = GRADCEN + nvals_gradcen[ni2d] * CENAMP
+
 					if y > gradcen then
 						grad = -((y - gradcen) / HIGRAD) ^ HEXP
 					else
 						grad = ((gradcen - y) / LOGRAD) ^ LEXP
 					end
+
 					if nvals_fault[ni3d] >= 0 then
 						density = (nvals_terrain[ni3d] +
-								nvals_terralt[ni3d]) / 2 * (1 - terblen)
-								+ nvals_smooth[ni3d] * terblen + grad
+							nvals_terralt[ni3d]) / 2 * (1 - terblen) +
+							nvals_smooth[ni3d] * terblen + grad
 					else	
 						density = (nvals_terrain[ni3d] -
-								nvals_terralt[ni3d]) / 2 * (1 - terblen)
-								- nvals_smooth[ni3d] * terblen + grad
+							nvals_terralt[ni3d]) / 2 * (1 - terblen) -
+							nvals_smooth[ni3d] * terblen + grad
 					end
+
 					if density >= STOT then
 						stable[si] = true
 					elseif stable[si] and density < 0 and terblen == 1 then
@@ -484,6 +494,7 @@ function moonrealm_spawnplayer(player)
 						zsp = z
 						break
 					end
+
 					ni3d = ni3d + 1
 					ni2d = ni2d + 1
 				end
@@ -502,7 +513,7 @@ function moonrealm_spawnplayer(player)
 		end
 	end
 
-	print ("[moonrealm] spawn player ("..xsp.." "..ysp.." "..zsp..")")
+	print ("[moonrealm] spawn player (" .. xsp .. " " .. ysp .. " " .. zsp .. ")")
 	player:setpos({x = xsp, y = ysp, z = zsp})
 
 	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:spacesuit 4")
@@ -547,6 +558,7 @@ function moonrealm_spawnplayer(player)
 	end
 	end
 	end
+
 	vm:set_data(data)
 	vm:write_to_map()
 	vm:update_map()
@@ -561,4 +573,3 @@ minetest.register_on_respawnplayer(function(player)
 	moonrealm_spawnplayer(player)
 	return true
 end)
-
