@@ -43,7 +43,7 @@ local np_terralt = {
 	persist = 0.67
 }
 
--- 3D noise for smooth terrain
+-- 2D noise for smooth terrain
 
 local np_smooth = {
 	offset = 0,
@@ -139,7 +139,7 @@ end)
 
 minetest.register_globalstep(function(dtime)
 	for _, player in ipairs(minetest.get_connected_players()) do
-		if FOOT and math.random() < 0.2 and -- footprints
+		if FOOT and math.random() < 0.15 and -- footprints
 				player_pos_previous[player:get_player_name()] ~= nil then
 			local pos = player:getpos()
 			player_pos[player:get_player_name()] = {
@@ -231,10 +231,10 @@ end)
 
 local nobj_terrain = nil
 local nobj_terralt = nil
-local nobj_smooth = nil
 local nobj_fissure = nil
 local nobj_fault = nil
 
+local nobj_smooth = nil
 local nobj_terblen = nil
 local nobj_gradcen = nil
 
@@ -280,19 +280,19 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	
 	nobj_terrain = nobj_terrain or minetest.get_perlin_map(np_terrain, pmaplens3d)
 	nobj_terralt = nobj_terralt or minetest.get_perlin_map(np_terralt, pmaplens3d)
-	nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, pmaplens3d)
 	nobj_fissure = nobj_fissure or minetest.get_perlin_map(np_fissure, pmaplens3d)
 	nobj_fault   = nobj_fault   or minetest.get_perlin_map(np_fault, pmaplens3d)
 	
+	nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, pmaplens2d)
 	nobj_terblen = nobj_terblen or minetest.get_perlin_map(np_terblen, pmaplens2d)
 	nobj_gradcen = nobj_gradcen or minetest.get_perlin_map(np_gradcen, pmaplens2d)
 	
 	local nvals_terrain = nobj_terrain:get3dMap_flat(minpos3d)
 	local nvals_terralt = nobj_terralt:get3dMap_flat(minpos3d)
-	local nvals_smooth  = nobj_smooth :get3dMap_flat(minpos3d)
 	local nvals_fissure = nobj_fissure:get3dMap_flat(minpos3d)
 	local nvals_fault   = nobj_fault  :get3dMap_flat(minpos3d)
 	
+	local nvals_smooth  = nobj_smooth :get2dMap_flat(minpos2d)
 	local nvals_terblen = nobj_terblen:get2dMap_flat(minpos2d)
 	local nvals_gradcen = nobj_gradcen:get2dMap_flat(minpos2d)
 	
@@ -337,11 +337,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				if nvals_fault[ni3d] >= 0 then
 					density = (nvals_terrain[ni3d] +
 						nvals_terralt[ni3d]) / 2 * (1 - terblen) +
-						nvals_smooth[ni3d] * terblen + grad
+						nvals_smooth[ni2d] * terblen + grad
 				else	
 					density = (nvals_terrain[ni3d] -
 						nvals_terralt[ni3d]) / 2 * (1 - terblen) -
-						nvals_smooth[ni3d] * terblen + grad
+						nvals_smooth[ni2d] * terblen + grad
 				end
 
 				if density > 0 and empty then -- if terrain and node empty
@@ -408,19 +408,23 @@ minetest.register_on_generated(function(minp, maxp, seed)
 end)
 
 
--- Spawn player function, dependant on chunk size of 80 nodes
+-- Spawn point, localise here to make available to all spawn functions
 
-function moonrealm_spawnplayer(player)
+local xsp, ysp, zsp
+
+-- Find spawn function, dependant on chunk size of 80 nodes (TODO allow any chunksize)
+
+local function moonrealm_find_spawn()
 	local PSCA = 16
-	local xsp
-	local ysp
-	local zsp
+	xsp = nil
+	ysp = nil
+	zsp = nil
 
 	local nobj_terrain = nil
 	local nobj_terralt = nil
-	local nobj_smooth = nil
 	local nobj_fault = nil
 
+	local nobj_smooth = nil
 	local nobj_terblen = nil
 	local nobj_gradcen = nil
 
@@ -442,17 +446,17 @@ function moonrealm_spawnplayer(player)
 	
 		nobj_terrain = nobj_terrain or minetest.get_perlin_map(np_terrain, pmaplens3d)
 		nobj_terralt = nobj_terralt or minetest.get_perlin_map(np_terralt, pmaplens3d)
-		nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, pmaplens3d)
 		nobj_fault   = nobj_fault   or minetest.get_perlin_map(np_fault, pmaplens3d)
 	
+		nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, pmaplens2d)
 		nobj_terblen = nobj_terblen or minetest.get_perlin_map(np_terblen, pmaplens2d)
 		nobj_gradcen = nobj_gradcen or minetest.get_perlin_map(np_gradcen, pmaplens2d)
 	
 		local nvals_terrain = nobj_terrain:get3dMap_flat(minpos3d)
 		local nvals_terralt = nobj_terralt:get3dMap_flat(minpos3d)
-		local nvals_smooth  = nobj_smooth :get3dMap_flat(minpos3d)
 		local nvals_fault   = nobj_fault  :get3dMap_flat(minpos3d)
 	
+		local nvals_smooth  = nobj_smooth :get2dMap_flat(minpos2d)
 		local nvals_terblen = nobj_terblen:get2dMap_flat(minpos2d)
 		local nvals_gradcen = nobj_gradcen:get2dMap_flat(minpos2d)
 	
@@ -479,17 +483,19 @@ function moonrealm_spawnplayer(player)
 					if nvals_fault[ni3d] >= 0 then
 						density = (nvals_terrain[ni3d] +
 							nvals_terralt[ni3d]) / 2 * (1 - terblen) +
-							nvals_smooth[ni3d] * terblen + grad
+							nvals_smooth[ni2d] * terblen + grad
 					else	
 						density = (nvals_terrain[ni3d] -
 							nvals_terralt[ni3d]) / 2 * (1 - terblen) -
-							nvals_smooth[ni3d] * terblen + grad
+							nvals_smooth[ni2d] * terblen + grad
 					end
 
 					if density >= STOT then
 						stable[si] = true
-					elseif stable[si] and density < 0 and terblen == 1 then
-						ysp = y + 4
+					-- just above ground, smooth terrain, away from faults
+					elseif stable[si] and density < 0 and terblen == 1 and
+							math.abs(nvals_fault[ni3d]) > 0.5 then
+						ysp = y + 3
 						xsp = x
 						zsp = z
 						break
@@ -512,20 +518,29 @@ function moonrealm_spawnplayer(player)
 			break
 		end
 	end
+end
+
+
+-- Spawn newplayer function
+
+minetest.register_on_newplayer(function(player)
+	moonrealm_find_spawn()
 
 	print ("[moonrealm] spawn player (" .. xsp .. " " .. ysp .. " " .. zsp .. ")")
 	player:setpos({x = xsp, y = ysp, z = zsp})
 
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:spacesuit 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:sapling 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:airlock 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:airgen 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "moonrealm:hlsource 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:apple 64")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:pick_diamond 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:axe_diamond 4")
-	minetest.add_item({x = xsp, y = ysp + 1, z = zsp}, "default:shovel_diamond 4")
+	local inv = player:get_inventory()
+	inv:add_item("main", "moonrealm:spacesuit 2")
+	inv:add_item("main", "moonrealm:sapling 4")
+	inv:add_item("main", "moonrealm:airlock 4")
+	inv:add_item("main", "moonrealm:airgen 4")
+	inv:add_item("main", "moonrealm:hlsource 4")
+	inv:add_item("main", "default:apple 64")
+	inv:add_item("main", "default:pick_diamond 4")
+	inv:add_item("main", "default:axe_diamond 4")
+	inv:add_item("main", "default:shovel_diamond 4")
 
+	-- create spawn egg
 	local vm = minetest.get_voxel_manip()
 	local pos1 = {x = xsp - 3, y = ysp - 3, z = zsp - 3}
 	local pos2 = {x = xsp + 3, y = ysp + 6, z = zsp + 3}
@@ -562,14 +577,21 @@ function moonrealm_spawnplayer(player)
 	vm:set_data(data)
 	vm:write_to_map()
 	vm:update_map()
-end
-
-
-minetest.register_on_newplayer(function(player)
-	moonrealm_spawnplayer(player)
 end)
 
+
+-- Respawn player function
+
 minetest.register_on_respawnplayer(function(player)
-	moonrealm_spawnplayer(player)
+	moonrealm_find_spawn()
+
+	print ("[moonrealm] respawn player (" .. xsp .. " " .. ysp .. " " .. zsp .. ")")
+	player:setpos({x = xsp, y = ysp, z = zsp})
+
+	local inv = player:get_inventory()
+	inv:add_item("main", "moonrealm:spacesuit")
+	inv:add_item("main", "default:pick_diamond")
+	inv:add_item("main", "default:apple 16")
+
 	return true
 end)
