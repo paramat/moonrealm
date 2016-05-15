@@ -1,3 +1,5 @@
+-- Nodes
+
 minetest.register_node("moonrealm:stone", {
 	description = "Moon Stone",
 	tiles = {"moonrealm_stone.png"},
@@ -120,24 +122,37 @@ minetest.register_node("moonrealm:airgen", {
 	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 	on_construct = function(pos)
-		local x = pos.x
-		local y = pos.y
-		local z = pos.z
-		for i = -1, 1 do
-		for j = -1, 1 do
-		for k = -1, 1 do
-			if not (i == 0 and j == 0 and k == 0) then
-				local nodename = minetest.get_node({x = x + i, y = y + j, z = z + k}).name
-				if nodename == "moonrealm:vacuum" then
-					minetest.add_node({x = x + i, y = y + j, z = z + k},{name="moonrealm:air"})
-					minetest.get_meta({x = x + i, y = y + j, z = z + k}):set_int("spread", 16)
-					print ("[moonrealm] Added moonrealm air node")
+		local xa = pos.x
+		local ya = pos.y
+		local za = pos.z
+
+		local c_air = minetest.get_content_id("moonrealm:air")
+		local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
+
+		local vm = minetest.get_voxel_manip()
+		local pos1 = {x = xa - 16, y = ya - 16, z = za - 16}
+		local pos2 = {x = xa + 16, y = ya + 16, z = za + 16}
+		local emin, emax = vm:read_from_map(pos1, pos2)
+		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
+		local data = vm:get_data()
+
+		for z = pos1.z, pos2.z do
+		for y = pos1.y, pos2.y do
+			local vi = area:index(pos1.x, y, z)
+			for x = pos1.x, pos2.x do
+				if data[vi] == c_vacuum then
+					data[vi] = c_air
 				end
+				vi = vi + 1
 			end
 		end
 		end
-		end
 		
+		vm:set_data(data)
+		vm:write_to_map()
+		--vm:update_map() not needed as no effect on lighting
+
+		print ("[moonrealm] air generated")
 	end
 })
 
@@ -362,129 +377,4 @@ minetest.register_craftitem("moonrealm:lifesupport", {
 	description = "Life Support",
 	inventory_image = "moonrealm_lifesupport.png",
 	groups = {not_in_creative_inventory = 1},
-})
-
--- Crafting
-
-minetest.register_craft({
-	output = "moonrealm:airlock",
-	recipe = {
-		{"default:steel_ingot", "", "default:steel_ingot"},
-		{"default:steel_ingot", "default:mese", "default:steel_ingot"},
-		{"default:steel_ingot", "", "default:steel_ingot"},
-	},
-})
-
-minetest.register_craft({
-	output = "moonrealm:airgen",
-	recipe = {
-		{"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
-		{"moonrealm:waterice", "default:mese", "moonrealm:waterice"},
-		{"default:steel_ingot", "moonrealm:waterice", "default:steel_ingot"},
-	},
-})
-
-minetest.register_craft({
-	output = "default:water_source",
-	recipe = {
-		{"moonrealm:waterice"},
-	},
-})
-
-minetest.register_craft({
-	output = "moonrealm:hlsource",
-	recipe = {
-		{"moonrealm:appleleaf", "moonrealm:appleleaf", "moonrealm:appleleaf"},
-		{"moonrealm:appleleaf", "moonrealm:waterice", "moonrealm:appleleaf"},
-		{"moonrealm:appleleaf", "moonrealm:appleleaf", "moonrealm:appleleaf"},
-	},
-})
-
-minetest.register_craft({
-	output = "moonrealm:stonebrick 4",
-	recipe = {
-		{"moonrealm:stone", "moonrealm:stone"},
-		{"moonrealm:stone", "moonrealm:stone"},
-	}
-})
-
-minetest.register_craft({
-	output = "default:furnace",
-	recipe = {
-		{"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
-		{"moonrealm:stone", "", "moonrealm:stone"},
-		{"moonrealm:stone", "moonrealm:stone", "moonrealm:stone"},
-	},
-})
-
-minetest.register_craft({
-	output = "moonrealm:stoneslab 4",
-	recipe = {
-		{"moonrealm:stone", "moonrealm:stone"},
-	}
-})
-
-minetest.register_craft({
-	output = "moonrealm:stonestair 4",
-	recipe = {
-		{"moonrealm:stone", ""},
-		{"moonrealm:stone", "moonrealm:stone"},
-	}
-})
-
-minetest.register_craft({
-	output = "moonrealm:helmet",
-	recipe = {
-		{"default:mese_crystal"},
-		{"default:glass"},
-		{"default:steel_ingot"},
-	}
-})
-
-minetest.register_craft({
-	output = "moonrealm:lifesupport",
-	recipe = {
-		{"default:steel_ingot","default:steel_ingot" , "default:steel_ingot"},
-		{"default:steel_ingot", "", "default:steel_ingot"},
-		{"default:steel_ingot", "default:mese", "default:steel_ingot"},
-	}
-})
-
-minetest.register_craft({
-	output = "moonrealm:spacesuit",
-	recipe = {
-		{"wool:white", "moonrealm:helmet", "wool:white"},
-		{"", "moonrealm:lifesupport", ""},
-		{"wool:white", "", "wool:white"},
-	}
-})
-
-minetest.register_craft({
-	output = "moonrealm:light 8",
-	recipe = {
-		{"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
-		{"moonrealm:glass", "default:mese", "moonrealm:glass"},
-		{"moonrealm:glass", "moonrealm:glass", "moonrealm:glass"},
-	},
-})
-
-minetest.register_craft({
-	type = "shapeless",
-	output = "moonrealm:light 1",
-	recipe = {"moonrealm:glass", "default:mese_crystal"},
-})
-
-
--- Cooking
-
-minetest.register_craft({
-	type = "cooking",
-	output = "moonrealm:glass",
-	recipe = "moonrealm:dust",
-})
-
-minetest.register_craft({
-	type = "fuel",
-	recipe = "default:mese_crystal",
-	burntime = 50,
 })
