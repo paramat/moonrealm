@@ -122,22 +122,25 @@ minetest.register_node("moonrealm:airgen", {
 	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 	on_construct = function(pos)
-		local xa = pos.x
-		local ya = pos.y
-		local za = pos.z
+		local px = pos.x
+		local py = pos.y
+		local pz = pos.z
 
 		local c_air = minetest.get_content_id("moonrealm:air")
 		local c_vacuum = minetest.get_content_id("moonrealm:vacuum")
+		local c_airgen_empty = minetest.get_content_id("moonrealm:airgen_empty")
 
 		local vm = minetest.get_voxel_manip()
-		local pos1 = {x = xa - 16, y = ya - 16, z = za - 16}
-		local pos2 = {x = xa + 16, y = ya + 16, z = za + 16}
+		local pos1 = {x = px - 8, y = py - 8, z = pz - 8}
+		local pos2 = {x = px + 8, y = py + 9, z = pz + 8}
 		local emin, emax = vm:read_from_map(pos1, pos2)
 		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 		local data = vm:get_data()
+		local viystride = emax.x - emin.x + 1
 
+		-- replace vaccum with air in all but top layer
 		for z = pos1.z, pos2.z do
-		for y = pos1.y, pos2.y do
+		for y = pos1.y, pos2.y - 1 do
 			local vi = area:index(pos1.x, y, z)
 			for x = pos1.x, pos2.x do
 				if data[vi] == c_vacuum then
@@ -148,12 +151,42 @@ minetest.register_node("moonrealm:airgen", {
 		end
 		end
 		
+		-- spread vacuum down through columns to remove most air
+		for z = pos1.z, pos2.z do
+		for x = pos1.x, pos2.x do
+			local vi = area:index(x, pos2.y, z)
+			-- if vacuum at column top
+			if data[vi] == c_vacuum then
+				vi = vi - viystride
+				for y = pos2.y - 1, pos1.y, -1 do
+					if data[vi] == c_air then
+						data[vi] = c_vacuum
+					else
+						break
+					end
+					vi = vi - viystride
+				end
+			end
+		end
+		end
+		
+		-- replace with empty airgen
+		data[area:index(px, py, pz)] = c_airgen_empty
+
 		vm:set_data(data)
 		vm:write_to_map()
-		--vm:update_map() not needed as no effect on lighting
+		vm:update_map()
 
 		print ("[moonrealm] air generated")
 	end
+})
+
+minetest.register_node("moonrealm:airgen_empty", {
+	description = "Air Generator Empty",
+	tiles = {"moonrealm_airgen_empty.png"},
+	is_ground_content = false,
+	groups = {cracky = 3},
+	sounds = default.node_sound_stone_defaults(),
 })
 
 minetest.register_node("moonrealm:waterice", {
@@ -236,7 +269,6 @@ minetest.register_node("moonrealm:airlock", {
 	light_source = 14,
 	is_ground_content = false,
 	walkable = false,
-	post_effect_color = {a = 255, r = 181, g = 181, b = 181},
 	groups = {cracky = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
