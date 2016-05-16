@@ -135,7 +135,7 @@ end)
 minetest.register_abm({
 	nodenames = {"moonrealm:air"},
 	neighbors = {"moonrealm:vacuum"},
-	interval = 2,
+	interval = 4,
 	chance = 64,
 	catch_up = false,
 	action = function(pos, node, active_object_count, active_object_count_wider)

@@ -119,7 +119,7 @@ minetest.register_node("moonrealm:airgen", {
 	description = "Air Generator",
 	tiles = {"moonrealm_airgen.png"},
 	is_ground_content = false,
-	groups = {cracky = 3},
+	groups = {dig_immediate = 3},
 	sounds = default.node_sound_stone_defaults(),
 	on_construct = function(pos)
 		local px = pos.x
@@ -185,7 +185,7 @@ minetest.register_node("moonrealm:airgen_empty", {
 	description = "Air Generator Empty",
 	tiles = {"moonrealm_airgen_empty.png"},
 	is_ground_content = false,
-	groups = {cracky = 3},
+	groups = {dig_immediate = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -269,7 +269,7 @@ minetest.register_node("moonrealm:airlock", {
 	light_source = 14,
 	is_ground_content = false,
 	walkable = false,
-	groups = {cracky = 3},
+	groups = {dig_immediate = 3},
 	sounds = default.node_sound_stone_defaults(),
 })
 
@@ -294,7 +294,7 @@ minetest.register_node("moonrealm:sapling", {
 	paramtype = "light",
 	is_ground_content = false,
 	walkable = false,
-	groups = {snappy = 2, dig_immediate = 3, flammable = 2},
+	groups = {dig_immediate = 3},
 	sounds = default.node_sound_defaults(),
 })
 
@@ -322,7 +322,7 @@ minetest.register_node("moonrealm:light", {
 	paramtype = "light",
 	light_source = 14,
 	is_ground_content = false,
-	groups = {cracky = 3, dig_immediate = 3},
+	groups = {dig_immediate = 3},
 	sounds = default.node_sound_glass_defaults(),
 })
 
@@ -388,8 +388,84 @@ minetest.register_node("moonrealm:shell", {
 	description = "Spawn Shell",
 	tiles = {"moonrealm_shell.png"},
 	is_ground_content = false,
-	groups = {cracky = 3},
+	groups = {dig_immediate = 3},
+	drop = "",
 	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("moonrealm:photovoltaic", {
+	description = "Photovoltaic Panel",
+	tiles = {"moonrealm_photovoltaic_top.png",
+		"moonrealm_photovoltaic_base.png",
+		"moonrealm_photovoltaic_side.png"},
+	is_ground_content = false,
+	groups = {dig_immediate = 3},
+	sounds = default.node_sound_glass_defaults(),
+})
+
+-- Storage
+
+local chest_formspec =
+	"size[8,9]" ..
+	default.gui_bg ..
+	default.gui_bg_img ..
+	default.gui_slots ..
+	"list[current_name;main;0,0.3;8,4;]" ..
+	"list[current_player;main;0,4.85;8,1;]" ..
+	"list[current_player;main;0,6.08;8,3;8]" ..
+	"listring[current_name;main]" ..
+	"listring[current_player;main]" ..
+	default.get_hotbar_bg(0,4.85)
+
+minetest.register_node("moonrealm:storage", {
+	description = "Storage",
+	tiles = {"moonrealm_storage_side.png", "moonrealm_storage_side.png",
+		"moonrealm_storage_side.png", "moonrealm_storage_side.png",
+		"moonrealm_storage_side.png", "moonrealm_storage_front.png"},
+	paramtype2 = "facedir",
+	groups = {dig_immediate = 3},
+	is_ground_content = false,
+	sounds = default.node_sound_stone_defaults(),
+
+	on_construct = function(pos)
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", chest_formspec)
+		meta:set_string("infotext", "Storage")
+		local inv = meta:get_inventory()
+		inv:set_size("main", 8 * 4)
+	end,
+
+	can_dig = function(pos,player)
+		local meta = minetest.get_meta(pos);
+		local inv = meta:get_inventory()
+		return inv:is_empty("main")
+	end,
+
+	on_metadata_inventory_move = function(pos, from_list, from_index,
+			to_list, to_index, count, player)
+		minetest.log("action", player:get_player_name() ..
+			" moves stuff in storage at " .. minetest.pos_to_string(pos))
+	end,
+
+    on_metadata_inventory_put = function(pos, listname, index, stack, player)
+		minetest.log("action", player:get_player_name() ..
+			" moves " .. stack:get_name() ..
+			" to storage at " .. minetest.pos_to_string(pos))
+	end,
+
+    on_metadata_inventory_take = function(pos, listname, index, stack, player)
+		minetest.log("action", player:get_player_name() ..
+			" takes " .. stack:get_name() ..
+			" from storage at " .. minetest.pos_to_string(pos))
+	end,
+
+	on_blast = function(pos)
+		local drops = {}
+		default.get_inventory_drops(pos, "main", drops)
+		drops[#drops + 1] = "moonrealm:storage"
+		minetest.remove_node(pos)
+		return drops
+	end,
 })
 
 -- Items
