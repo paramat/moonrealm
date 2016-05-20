@@ -26,9 +26,9 @@ local FOOT = true -- Footprints in dust
 local np_terrain = {
 	offset = 0,
 	scale = 1,
-	spread = {x = 512, y = 512, z = 512},
+	spread = {x = 384, y = 384, z = 384},
 	seed = 58588900033,
-	octaves = 6,
+	octaves = 5,
 	persist = 0.67
 }
 
@@ -37,9 +37,9 @@ local np_terrain = {
 local np_terralt = {
 	offset = 0,
 	scale = 1,
-	spread = {x = 414, y = 414, z = 414},
+	spread = {x = 311, y = 311, z = 311},
 	seed = 13331930910,
-	octaves = 6,
+	octaves = 5,
 	persist = 0.67
 }
 
@@ -48,9 +48,9 @@ local np_terralt = {
 local np_smooth = {
 	offset = 0,
 	scale = 1,
-	spread = {x = 828, y = 828, z = 828},
+	spread = {x = 512, y = 512, z = 512},
 	seed = 113,
-	octaves = 4,
+	octaves = 3,
 	persist = 0.4
 }
 
@@ -59,9 +59,9 @@ local np_smooth = {
 local np_fissure = {
 	offset = 0,
 	scale = 1,
-	spread = {x = 256, y = 256, z = 256},
+	spread = {x = 192, y = 192, z = 192},
 	seed = 8181112,
-	octaves = 5,
+	octaves = 4,
 	persist = 0.5
 }
 
@@ -93,7 +93,7 @@ local np_gradcen = {
 local np_terblen = {
 	offset = 0,
 	scale = 1,
-	spread = {x = 2048, y = 2048, z = 2048},
+	spread = {x = 1024, y = 1024, z = 1024},
 	seed = -13002,
 	octaves = 3,
 	persist = 0.4
@@ -109,7 +109,7 @@ dofile(minetest.get_modpath("moonrealm") .. "/functions.lua")
 
 -- Set mapgen parameters
 
-minetest.set_mapgen_params({mgname = "singlenode", water_level = -32000})
+minetest.set_mapgen_params({mgname = "singlenode", water_level = -31000})
 
 
 -- Player positions, spacesuit texture status
@@ -240,16 +240,16 @@ local nobj_terblen = nil
 local nobj_gradcen = nil
 
 
--- Create noise buffers
+-- Localise noise buffers
 
-local nbuf_terrain = {}
-local nbuf_terralt = {}
-local nbuf_fissure = {}
-local nbuf_fault = {}
+local nbuf_terrain
+local nbuf_terralt
+local nbuf_fissure
+local nbuf_fault
 
-local nbuf_smooth = {}
-local nbuf_terblen = {}
-local nbuf_gradcen = {}
+local nbuf_smooth
+local nbuf_terblen
+local nbuf_gradcen
 
 
 -- On generated function
@@ -412,19 +412,20 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 	
 	vm:set_data(data)
-	vm:set_lighting({day=0, night=0}) -- not "nolight" because mapgen does not run in all chunks
+	--vm:set_lighting({day=0, night=0})
 	vm:calc_lighting()
 	vm:write_to_map(data)
 
 	local chugent = math.ceil((os.clock() - t1) * 1000)
-	print ("[moonrealm] " .. chugent .. " ms")
+	print ("[moonrealm] chunk generation " .. chugent .. " ms")
 end)
 
 
--- Find spawn function, dependant on chunk size of 80 nodes (TODO allow any chunksize)
+-- Find spawn function, dependant on chunk size of 80 nodes
+-- TODO allow any chunksize, search using 2D noises first
 
 local function moonrealm_find_spawn()
-	local PSCA = 16
+	local PSCA = 8
 
 	local nobj_terrain = nil
 	local nobj_terralt = nil
@@ -501,7 +502,7 @@ local function moonrealm_find_spawn()
 					-- just above ground, smooth terrain, away from faults
 					elseif stable[si] and density < 0 and terblen == 1 and
 							math.abs(nvals_fault[ni3d]) > 0.25 then
-						return {x = x, y = y + 3, z = z}
+						return {x = x, y = y, z = z}
 					end
 
 					ni3d = ni3d + 1
@@ -521,10 +522,8 @@ end
 
 minetest.register_on_newplayer(function(player)
 	local spawn_pos = moonrealm_find_spawn()
-	local xsp = spawn_pos.x
-	local ysp = spawn_pos.y
-	local zsp = spawn_pos.z
-	print ("[moonrealm] spawn player (" .. xsp .. " " .. ysp .. " " .. zsp .. ")")
+	print ("[moonrealm] spawn new player (" .. spawn_pos.x .. " " ..
+		spawn_pos.y .. " " .. spawn_pos.z .. ")")
 	player:setpos(spawn_pos)
 
 	local inv = player:get_inventory()
@@ -532,53 +531,16 @@ minetest.register_on_newplayer(function(player)
 	inv:add_item("main", "default:shovel_diamond 4")
 	inv:add_item("main", "default:axe_diamond 4")
 	inv:add_item("main", "default:apple 64")
-	inv:add_item("main", "moonrealm:photovoltaic 16")
-	inv:add_item("main", "moonrealm:light 4")
-	inv:add_item("main", "moonrealm:glass 4")
+	inv:add_item("main", "moonrealm:photovoltaic 256")
+	inv:add_item("main", "moonrealm:light 16")
+	inv:add_item("main", "moonrealm:glass 16")
 	inv:add_item("main", "moonrealm:storage 4")
 	inv:add_item("main", "moonrealm:airlock 4")
 	inv:add_item("main", "moonrealm:airgen 4")
+	inv:add_item("main", "moonrealm:air_cylinder 4")
 	inv:add_item("main", "moonrealm:hlsource 4")
 	inv:add_item("main", "moonrealm:sapling 4")
 	inv:add_item("main", "moonrealm:spacesuit 4")
-
-	-- create spawn egg
-	local vm = minetest.get_voxel_manip()
-	local pos1 = {x = xsp - 3, y = ysp - 3, z = zsp - 3}
-	local pos2 = {x = xsp + 3, y = ysp + 6, z = zsp + 3}
-	local emin, emax = vm:read_from_map(pos1, pos2)
-	local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
-	local data = vm:get_data()
-	local c_shell = minetest.get_content_id("moonrealm:shell")
-	local c_light = minetest.get_content_id("moonrealm:light")
-	local c_lsair = minetest.get_content_id("moonrealm:air")
-
-	for i = -3, 3 do
-	for j = -3, 6 do
-	for k = -3, 3 do
-		local vi = area:index(xsp + i, ysp + j, zsp + k)
-		local rad
-		if j <= 0 then
-			rad = math.sqrt(i ^ 2 + j ^ 2 + k ^ 2)
-		else
-			rad = math.sqrt(i ^ 2 + j ^ 2 * 0.3 + k ^ 2)
-		end
-		if rad <= 3.5 then
-			if rad >= 2.5 then
-				data[vi] = c_shell
-			elseif rad >= 1.5 then
-				data[vi] = c_light
-			else
-				data[vi] = c_lsair
-			end
-		end
-	end
-	end
-	end
-
-	vm:set_data(data)
-	vm:write_to_map()
-	vm:update_map()
 end)
 
 

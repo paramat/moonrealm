@@ -231,7 +231,8 @@ minetest.register_node("moonrealm:hlflowing", {
 	liquid_alternative_source = "moonrealm:hlsource",
 	liquid_viscosity = 1,
 	post_effect_color = {a = 224, r = 115, g = 55, b = 24},
-	groups = {water = 3, liquid = 3, puts_out_fire = 1},
+	groups = {water = 3, liquid = 3, puts_out_fire = 1,
+		not_in_creative_inventory = 1},
 })
 
 minetest.register_node("moonrealm:hlsource", {
@@ -287,7 +288,6 @@ minetest.register_node("moonrealm:glass", {
 minetest.register_node("moonrealm:sapling", {
 	description = "Sapling",
 	drawtype = "plantlike",
-	visual_scale = 1.0,
 	tiles = {"default_sapling.png"},
 	inventory_image = "default_sapling.png",
 	wield_image = "default_sapling.png",
@@ -384,24 +384,34 @@ minetest.register_node("moonrealm:stonestair", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:shell", {
-	description = "Spawn Shell",
-	tiles = {"moonrealm_shell.png"},
-	is_ground_content = false,
-	groups = {dig_immediate = 3},
-	drop = "",
-	sounds = default.node_sound_stone_defaults(),
-})
-
 minetest.register_node("moonrealm:photovoltaic", {
 	description = "Photovoltaic Panel",
 	tiles = {"moonrealm_photovoltaic_top.png",
 		"moonrealm_photovoltaic_base.png",
 		"moonrealm_photovoltaic_side.png"},
+	paramtype = "light",
 	is_ground_content = false,
+	drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-0.5, -0.5, -0.5, 0.5, 0.0, 0.5},
+		},
+	},
 	groups = {dig_immediate = 3},
 	sounds = default.node_sound_glass_defaults(),
 })
+
+minetest.register_node("moonrealm:air_cylinder", {
+	description = "Air Cylinder",
+	drawtype = "plantlike",
+	tiles = {"moonrealm_air_cylinder.png"},
+	paramtype = "light",
+	is_ground_content = false,
+	groups = {dig_immediate = 3},
+	sounds = default.node_sound_stone_defaults(),
+})
+
 
 -- Storage
 
@@ -467,6 +477,7 @@ minetest.register_node("moonrealm:storage", {
 		return drops
 	end,
 })
+
 
 -- Items
 
