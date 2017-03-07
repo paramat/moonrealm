@@ -105,6 +105,7 @@ local np_terblen = {
 dofile(minetest.get_modpath("moonrealm") .. "/nodes.lua")
 dofile(minetest.get_modpath("moonrealm") .. "/crafting.lua")
 dofile(minetest.get_modpath("moonrealm") .. "/functions.lua")
+dofile(minetest.get_modpath("moonrealm") .. "/rover.lua")
 
 
 -- Set mapgen parameters
@@ -252,6 +253,11 @@ local nbuf_terblen
 local nbuf_gradcen
 
 
+-- Localise data buffer
+
+local dbuf
+
+
 -- On generated function
 
 minetest.register_on_generated(function(minp, maxp, seed)
@@ -261,7 +267,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		return
 	end
 	
-	local t1 = os.clock()
+	--local t1 = os.clock()
 	local x1 = maxp.x
 	local y1 = maxp.y
 	local z1 = maxp.z
@@ -271,7 +277,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
 	local area = VoxelArea:new{MinEdge = emin, MaxEdge = emax}
-	local data = vm:get_data()
+	local data = vm:get_data(dbuf)
 	
 	local c_air          = minetest.get_content_id("air")
 	local c_ignore       = minetest.get_content_id("ignore")
@@ -328,7 +334,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		end
 
 		for y = y0, y1 do
-			local vi = area:index(x0, y, z) -- LVM index for first node in x row
+			local vi = area:index(x0, y, z)
 			local icecha = ICECHA * (1 + (GRADCEN - y) / ICEGRAD)
 
 			for x = x0, x1 do
@@ -412,12 +418,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 	
 	vm:set_data(data)
-	--vm:set_lighting({day=0, night=0})
+	vm:set_lighting({day=0, night=0})
 	vm:calc_lighting()
 	vm:write_to_map(data)
 
-	local chugent = math.ceil((os.clock() - t1) * 1000)
-	print ("[moonrealm] chunk generation " .. chugent .. " ms")
+	--local chugent = math.ceil((os.clock() - t1) * 1000)
+	--print ("[moonrealm] chunk generation " .. chugent .. " ms")
 end)
 
 
@@ -541,6 +547,7 @@ minetest.register_on_newplayer(function(player)
 	inv:add_item("main", "moonrealm:hlsource 4")
 	inv:add_item("main", "moonrealm:sapling 4")
 	inv:add_item("main", "moonrealm:spacesuit 4")
+	inv:add_item("main", "moonrealm:rover")
 end)
 
 
