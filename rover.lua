@@ -6,11 +6,6 @@ local STEPH = 1.1 -- Stepheight, 0.6 = climb slabs, 1.1 = climb nodes
 
 -- Functions
 
-local function is_ground(pos)
-	return minetest.registered_nodes[minetest.get_node(pos).name].walkable
-end
-
-
 local function get_sign(i)
 	if i == 0 then
 		return 0
@@ -32,15 +27,16 @@ local function get_v(v)
 end
 
 
--- Rover
+-- Rover entity
 
 local rover = {
 	physical = true,
 	collide_with_objects = true,
-	collisionbox = {-0.53, -1.0, -0.53, 0.53, 1.0, 0.53},
+	collisionbox = {-0.7, -1.0, -0.7, 0.7, 1.0, 0.7},
 	visual = "cube",
 	visual_size = {x = 2.0, y = 2.0},
-	textures = { -- top base rightside leftside front back
+	textures = {
+		-- Top, base, right, left, front, back
 		"moonrealm_rover_top.png",
 		"moonrealm_rover_base.png",
 		"moonrealm_rover_right.png",
@@ -56,6 +52,47 @@ local rover = {
 }
 
 
+-- Rover item
+
+minetest.register_craftitem("moonrealm:rover", {
+	description = "Rover",
+	inventory_image = "moonrealm_rover_front.png",
+	wield_scale = {x = 2, y = 2, z = 2},
+
+	on_place = function(itemstack, placer, pointed_thing)
+		local under = pointed_thing.under
+		local node = minetest.get_node(under)
+		local udef = minetest.registered_nodes[node.name]
+		if udef and udef.on_rightclick and
+				not (placer and placer:get_player_control().sneak) then
+			return udef.on_rightclick(under, node, placer, itemstack,
+				pointed_thing) or itemstack
+		end
+
+		if pointed_thing.type == "node" and
+				minetest.registered_nodes[node.name].walkable then
+			under.y = under.y + 1.5
+			local rover = minetest.add_entity(under, "moonrealm:rover")
+			if rover then
+				rover:setyaw(placer:get_look_horizontal())
+				if not minetest.setting_getbool("creative_mode") then
+					itemstack:take_item()
+				end
+			end
+		end
+
+		return itemstack
+	end,
+})
+
+
+-- Register entity
+
+minetest.register_entity("moonrealm:rover", rover)
+
+
+-- Rover entity functions
+
 function rover:on_rightclick(clicker)
 	if not clicker or not clicker:is_player() then
 		return
@@ -68,6 +105,14 @@ function rover:on_rightclick(clicker)
 		default.player_attached[name] = false
 		default.player_set_animation(clicker, "stand" , 30)
 	elseif not self.driver then
+		local attach = clicker:get_attach()
+		if attach and attach:get_luaentity() then
+			local luaentity = attach:get_luaentity()
+			if luaentity.driver then
+				luaentity.driver = nil
+			end
+			clicker:set_detach()
+		end
 		self.driver = clicker
 		clicker:set_attach(self.object, "",
 			{x = 0, y = 3, z = -2}, {x = 0, y = 0, z = 0})
@@ -75,7 +120,7 @@ function rover:on_rightclick(clicker)
 		minetest.after(0.2, function()
 			default.player_set_animation(clicker, "sit" , 30)
 		end)
-		self.object:setyaw(clicker:get_look_yaw() - math.pi / 2)
+		clicker:set_look_horizontal(self.object:getyaw())
 	end
 end
 
@@ -96,20 +141,29 @@ end
 
 function rover.on_punch(self, puncher, time_from_last_punch,
 		tool_capabilities, direction)
-	if self.driver then
-		self.driver:set_detach()
-		local name = self.driver:get_player_name()
-		default.player_attached[name] = false
-		default.player_set_animation(self.driver, "stand" , 30)
-		self.driver = nil
+	if not puncher or not puncher:is_player() or self.removed then
+		return
 	end
-	-- delay remove to ensure player is detached
-	minetest.after(0.1, function()
-		self.object:remove()
-	end)
-	if puncher and puncher:is_player() and
-			not minetest.setting_getbool("creative_mode") then
-		puncher:get_inventory():add_item("main", "moonrealm:rover")
+	if self.driver and puncher == self.driver then
+		self.driver = nil
+		puncher:set_detach()
+		default.player_attached[puncher:get_player_name()] = false
+	end
+	if not self.driver then
+		self.removed = true
+		local inv = puncher:get_inventory()
+		if not minetest.setting_getbool("creative_mode")
+				or not inv:contains_item("main", "moonrealm:rover") then
+			local leftover = inv:add_item("main", "moonrealm:rover")
+			-- If no room in inventory add a replacement rover to the world
+			if not leftover:is_empty() then
+				minetest.add_item(self.object:getpos(), leftover)
+			end
+		end
+		-- Delay remove to ensure player is detached
+		minetest.after(0.1, function()
+			self.object:remove()
+		end)
 	end
 end
 
@@ -144,6 +198,7 @@ function rover:on_step(dtime)
 			self.object:setyaw(self.object:getyaw() - turn)
 		end
 	end
+
 	local s = get_sign(self.v)
 	self.v = self.v - 0.03 * s
 	if s ~= get_sign(self.v) then
@@ -155,87 +210,9 @@ function rover:on_step(dtime)
 	if absv > MAXSP then
 		self.v = MAXSP * get_sign(self.v)
 	end
+
 	self.object:setacceleration({x = 0, y = -1.962, z = 0})
 	self.object:setvelocity(get_velocity(self.v, self.object:getyaw(),
 		self.object:getvelocity().y))
 	self.object:setpos(self.object:getpos())
 end
-
-
--- Register entity
-
-minetest.register_entity("moonrealm:rover", rover)
-
-
--- Item
-
-minetest.register_craftitem("moonrealm:rover", {
-	description = "Rover",
-	inventory_image = "moonrealm_rover_front.png",
-	wield_scale = {x = 2, y = 2, z = 2},
-	liquids_pointable = true,
-
-	on_place = function(itemstack, placer, pointed_thing)
-		if pointed_thing.type ~= "node" then
-			return
-		end
-
-		if not is_ground(pointed_thing.under) then
-			return
-		end
-
-		pointed_thing.under.y = pointed_thing.under.y + 1.5
-		minetest.add_entity(pointed_thing.under, "moonrealm:rover")
-		if not minetest.setting_getbool("creative_mode") then
-			itemstack:take_item()
-		end
-		return itemstack
-	end,
-})
-
---[[
-minetest.register_craftitem("mesecar:motor", {
-	description = "Mesecar Motor",
-	inventory_image = "mesecar_motor.png",
-	groups = {not_in_creative_inventory=1},
-})
-
-
-minetest.register_craftitem("mesecar:battery", {
-	description = "Mesecar Battery",
-	inventory_image = "mesecar_battery.png",
-	groups = {not_in_creative_inventory=1},
-})
-
-
--- Crafting
-
-minetest.register_craft({
-	output = "mesecar:motor",
-	recipe = {
-		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
-		{"default:copper_ingot", "default:steel_ingot", "default:copper_ingot"},
-		{"default:steel_ingot", "default:copper_ingot", "default:steel_ingot"},
-	},
-})
-
-
-minetest.register_craft({
-	output = "mesecar:battery",
-	recipe = {
-		{"default:steel_ingot", "default:steel_ingot", "default:steel_ingot"},
-		{"default:steel_ingot", "default:mese_block", "default:steel_ingot"},
-		{"default:copper_ingot", "default:copper_ingot", "default:steel_ingot"},
-	},
-})
-
-
-minetest.register_craft({
-	output = "mesecar:mesecar4", -- Mesecar
-	recipe = {
-		{"default:steel_ingot", "dye:yellow", "default:steel_ingot"},
-		{"default:steel_ingot", "group:wool", "default:glass"},
-		{"mesecar:motor", "mesecar:battery", "mesecar:motor"},
-	},
-})
---]]
