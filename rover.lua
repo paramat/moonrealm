@@ -1,7 +1,8 @@
-local ACDC = 0.2 -- Acceleration / decelleration
-local MAXSP = 8 -- Maximum speed
-local TURNSP = 0.03 -- Maximum yaw speed
-local STEPH = 1.1 -- Stepheight, 0.6 = climb slabs, 1.1 = climb nodes
+-- Parameters
+
+
+local ACDC = 0.15 -- Acceleration / decelleration
+local TURNSP = 0.02 -- Maximum yaw speed
 
 
 -- Functions
@@ -32,7 +33,7 @@ end
 local rover = {
 	physical = true,
 	collide_with_objects = true,
-	collisionbox = {-0.7, -1.0, -0.7, 0.7, 1.0, 0.7},
+	collisionbox = {-0.7, 0.4, -0.7, 0.7, 1.0, 0.7},
 	visual = "cube",
 	visual_size = {x = 2.0, y = 2.0},
 	textures = {
@@ -44,7 +45,7 @@ local rover = {
 		"moonrealm_rover_front.png",
 		"moonrealm_rover_back.png",
 	},
-	stepheight = STEPH,
+	stepheight = 0,
 	driver = nil,
 	v = 0,
 	last_v = 0,
@@ -169,50 +170,103 @@ end
 
 
 function rover:on_step(dtime)
-	self.v = get_v(self.object:getvelocity()) * get_sign(self.v)
+	local ctrl
 	if self.driver then
-		local ctrl = self.driver:get_player_control()
-		if ctrl.up then
-			self.v = self.v + ACDC
-		elseif ctrl.down then
-			self.v = self.v - ACDC
-		end
+		ctrl = self.driver:get_player_control()
 	end
-	if self.v == 0 and self.object:getvelocity().y == 0 then
+	if (not ctrl or not (ctrl.up or ctrl.down)) and
+			vector.equals(self.object:getvelocity(), {x = 0, y = 0, z = 0}) then
+		-- Either no driver or driver but no accelerator, and stationary
 		return
 	end
 
-	local absv = math.abs(self.v)
-	if self.driver then
-		local ctrl = self.driver:get_player_control()
-		local turn
-		local maxturn = (1 + dtime * 2) * TURNSP
-		if absv < 4 then
-			turn = maxturn * absv / 4
+	-- Touching ground?
+	local obj_pos = self.object:getpos()
+	obj_pos.y = obj_pos.y - 1.1
+	local under_pos = obj_pos
+	local node_under = minetest.get_node(under_pos)
+	local nodedef_under = minetest.registered_nodes[node_under.name]
+	local touch_ground = nodedef_under.walkable
+
+	local absv = get_v(self.object:getvelocity())
+	self.v = absv * get_sign(self.v)
+
+	if touch_ground then
+		-- Acceleration and steering
+		if self.driver then
+			if ctrl.up then
+				self.v = self.v + ACDC
+			elseif ctrl.down then
+				self.v = self.v - ACDC
+			end
+
+			local turn
+			local maxturn = (1 + dtime * 2) * TURNSP
+			if absv < 4 then
+				turn = maxturn * absv / 4
+			else
+				turn = maxturn * (1 - (absv - 4) / 8)
+			end
+			if ctrl.left then
+				self.object:setyaw(self.object:getyaw() + turn)
+			elseif ctrl.right then
+				self.object:setyaw(self.object:getyaw() - turn)
+			end
+		end
+
+		-- Slowing from resistence
+		local s = get_sign(self.v)
+		self.v = self.v - 0.04 * s
+		if s ~= get_sign(self.v) then
+			self.object:setvelocity({x = 0, y = 0, z = 0})
+			self.v = 0
+			return
+		end
+
+		-- Limit to max speed
+		if absv > 8 then
+			self.v = 8 * get_sign(self.v)
+		end
+	end
+
+	-- Vertical behaviour
+	local obj_pos = self.object:getpos()
+	obj_pos.y = obj_pos.y - 0.5
+	local nodedef_in = minetest.registered_nodes[minetest.get_node(obj_pos).name]
+	if nodedef_in.walkable then
+		-- In node, jump up
+		self.object:setacceleration({x = 0, y = 0, z = 0})
+		self.object:setvelocity(get_velocity(self.v,
+			self.object:getyaw(), math.max(absv / 2, 1)))
+		self.object:setpos(self.object:getpos())
+	else
+		if not touch_ground then
+			-- No node under, freefall
+			self.object:setacceleration({x = 0, y = -1.962, z = 0})
+			self.object:setvelocity(get_velocity(self.v, self.object:getyaw(),
+				self.object:getvelocity().y))
+			self.object:setpos(self.object:getpos())
 		else
-			turn = maxturn * (1 - (absv - 4) / 16)
+			-- Node under, on surface, check y velocity
+			if self.object:getvelocity().y < 0 then
+				-- Landing on surface
+				local pos = self.object:getpos()
+				pos.y = math.floor(pos.y) + 0.5
+				self.object:setacceleration({x = 0, y = 0, z = 0})
+				self.object:setvelocity(get_velocity(self.v, self.object:getyaw(), 0))
+				self.object:setpos(pos)
+			else
+				-- On surface or jumping up through surface
+				self.object:setacceleration({x = 0, y = 0, z = 0})
+				self.object:setvelocity(get_velocity(self.v, self.object:getyaw(),
+					self.object:getvelocity().y))
+				self.object:setpos(self.object:getpos())
+			end
+			if node_under.name == "moonrealm:dust" or
+					node_under.name == "moonrealm:dustprint1" or
+					node_under.name == "moonrealm:dustprint2" then
+				minetest.set_node(under_pos, {name = "moonrealm:dusttrack"})
+			end
 		end
-		if ctrl.left then
-			self.object:setyaw(self.object:getyaw() + turn)
-		elseif ctrl.right then
-			self.object:setyaw(self.object:getyaw() - turn)
-		end
 	end
-
-	local s = get_sign(self.v)
-	self.v = self.v - 0.03 * s
-	if s ~= get_sign(self.v) then
-		self.object:setvelocity({x = 0, y = 0, z = 0})
-		self.v = 0
-		return
-	end
-
-	if absv > MAXSP then
-		self.v = MAXSP * get_sign(self.v)
-	end
-
-	self.object:setacceleration({x = 0, y = -1.962, z = 0})
-	self.object:setvelocity(get_velocity(self.v, self.object:getyaw(),
-		self.object:getvelocity().y))
-	self.object:setpos(self.object:getpos())
 end

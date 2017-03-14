@@ -66,7 +66,7 @@ minetest.register_node("moonrealm:dust", {
 })
 
 minetest.register_node("moonrealm:dustprint1", {
-	description = "Moon Dust Footprint1",
+	description = "Moon Dust Footprint 1",
 	tiles = {"moonrealm_dustprint1.png", "moonrealm_dust.png"},
 	is_ground_content = false,
 	groups = {crumbly = 3},
@@ -77,8 +77,19 @@ minetest.register_node("moonrealm:dustprint1", {
 })
 
 minetest.register_node("moonrealm:dustprint2", {
-	description = "Moon Dust Footprint2",
+	description = "Moon Dust Footprint 2",
 	tiles = {"moonrealm_dustprint2.png", "moonrealm_dust.png"},
+	is_ground_content = false,
+	groups = {crumbly = 3},
+	drop = "moonrealm:dust",
+	sounds = default.node_sound_sand_defaults({
+		footstep = {name = "default_sand_footstep", gain = 0.05},
+	}),
+})
+
+minetest.register_node("moonrealm:dusttrack", {
+	description = "Moon Rover Track",
+	tiles = {"moonrealm_dusttrack.png", "moonrealm_dust.png"},
 	is_ground_content = false,
 	groups = {crumbly = 3},
 	drop = "moonrealm:dust",

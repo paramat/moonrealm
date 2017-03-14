@@ -137,7 +137,8 @@ minetest.register_globalstep(function(dtime)
 	for _, player in ipairs(minetest.get_connected_players()) do
 
 		-- Footprints
-		if FOOT and math.random() < 0.15 and
+		if FOOT and not default.player_attached[player:get_player_name()] and
+				math.random() < 0.15 and
 				player_pos_previous[player:get_player_name()] ~= nil then
 			local pos = player:getpos()
 			player_pos[player:get_player_name()] = {
