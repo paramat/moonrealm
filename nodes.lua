@@ -44,17 +44,6 @@ minetest.register_node("moonrealm:diamondore", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("moonrealm:mese", {
-	description = "Mese Block",
-	tiles = {"moonrealm_mese.png"},
-	paramtype = "light",
-	light_source = 3,
-	is_ground_content = false,
-	groups = {cracky = 1, level = 2},
-	drop = "default:mese",
-	sounds = default.node_sound_stone_defaults(),
-})
-
 minetest.register_node("moonrealm:dust", {
 	description = "Moon Dust",
 	tiles = {"moonrealm_dust.png"},
@@ -142,8 +131,8 @@ minetest.register_node("moonrealm:airgen", {
 		local c_airgen_empty = minetest.get_content_id("moonrealm:airgen_empty")
 
 		local vm = minetest.get_voxel_manip()
-		local pos1 = {x = px - 8, y = py - 8, z = pz - 8}
-		local pos2 = {x = px + 8, y = py + 9, z = pz + 8}
+		local pos1 = {x = px - 16, y = py - 16, z = pz - 16}
+		local pos2 = {x = px + 16, y = py + 17, z = pz + 16}
 		local emin, emax = vm:read_from_map(pos1, pos2)
 		local area = VoxelArea:new({MinEdge = emin, MaxEdge = emax})
 		local data = vm:get_data()
