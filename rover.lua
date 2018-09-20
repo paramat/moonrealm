@@ -76,7 +76,7 @@ minetest.register_craftitem("moonrealm:rover", {
 			local rover = minetest.add_entity(under, "moonrealm:rover")
 			if rover then
 				rover:setyaw(placer:get_look_horizontal())
-				if not minetest.setting_getbool("creative_mode") then
+				if not minetest.settings:get_bool("creative_mode") then
 					itemstack:take_item()
 				end
 			end
